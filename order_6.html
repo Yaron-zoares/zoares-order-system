@@ -1,0 +1,109 @@
+
+    <!DOCTYPE html>
+    <html dir="rtl" lang="he">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>הזמנה #6 - Zoares</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; direction: rtl; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+            .order-info { margin-bottom: 20px; }
+            .customer-info { background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+            .items-table th { background-color: #f2f2f2; }
+            .total { font-size: 18px; font-weight: bold; text-align: left; }
+            .status { padding: 5px 10px; border-radius: 3px; color: white; }
+            .status-pending { background-color: #ffc107; }
+            .status-processing { background-color: #17a2b8; }
+            .status-completed { background-color: #28a745; }
+            .status-cancelled { background-color: #dc3545; }
+            .cutting-instructions { background-color: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; }
+            @media print {
+                body { margin: 0; }
+                .no-print { display: none; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🐓 Zoares - הזמנה #6</h1>
+            <p>תאריך: 2025-07-18 14:41:31</p>
+        </div>
+        
+        <div class="customer-info">
+            <h3>📋 פרטי לקוח</h3>
+            <p><strong>שם:</strong> zuares yaron</p>
+            <p><strong>טלפון:</strong> 052-560-8009</p>
+    <p><strong>כתובת:</strong> פנחס מאירי, 45, קומה 4, פתח תקווה</p><p><strong>הערות:</strong> קוד כניסה חחחחח</p>
+        </div>
+        
+        <div class="order-info">
+            <h3>📦 פריטי ההזמנה</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>מוצר</th>
+                        <th>כמות</th>
+                        <th>מחיר ליחידה</th>
+                        <th>סה"כ</th>
+                    </tr>
+                </thead>
+                <tbody>
+    
+            <tr>
+                <td>עוף שלם</td>
+                <td>1.5</td>
+                <td>₪50.00</td>
+                <td>₪75.00</td>
+            </tr>
+        
+            <tr>
+                <td>חזה עוף</td>
+                <td>1.5</td>
+                <td>₪40.00</td>
+                <td>₪60.00</td>
+            </tr>
+        
+            <tr>
+                <td>שניצל עוף</td>
+                <td>3.0</td>
+                <td>₪35.00</td>
+                <td>₪105.00</td>
+            </tr>
+        
+            <tr>
+                <td>קציצות בשר</td>
+                <td>4</td>
+                <td>₪40.00</td>
+                <td>₪160.00</td>
+            </tr>
+        
+            <tr>
+                <td>צלעות</td>
+                <td>1.0</td>
+                <td>₪75.00</td>
+                <td>₪75.00</td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="total">
+            <p><strong>עלות משלוח:</strong> ₪0.00</p>
+            <p><strong>סה"כ לתשלום:</strong> ₪475.00</p>
+        </div>
+        
+        <div class="order-info">
+            <h3>📊 סטטוס הזמנה</h3>
+            <span class="status status-pending">ממתין לאישור</span>
+        </div>
+        
+        <div class="no-print" style="margin-top: 30px; text-align: center;">
+            <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">הדפס הזמנה</button>
+        </div>
+    </body>
+    </html>
+    

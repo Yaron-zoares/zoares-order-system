@@ -1,0 +1,503 @@
+[
+  {
+    "id": 3,
+    "customer_name": "or zoares",
+    "category": NaN,
+    "product": NaN,
+    "quantity": NaN,
+    "price": NaN,
+    "status": "pending",
+    "created_at": "2025-07-18 08:59:31",
+    "phone": "8888888888",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסבה 6666",
+    "items": {
+      "כנפיים": 1,
+      "כבד עוף": 1,
+      "הודו שלם": 1,
+      "המבורגר עוף": 1,
+      "בשר טחון מעורב": 1,
+      "נקניקיות בקר": 1,
+      "בשר כבש": 1,
+      "בשר אייל": 1
+    },
+    "total_amount": 310.0,
+    "cutting_instructions": NaN,
+    "closed_at": "2025-07-18 16:06:41"
+  },
+  {
+    "id": 3,
+    "customer_name": "or zoares",
+    "category": NaN,
+    "product": NaN,
+    "quantity": NaN,
+    "price": NaN,
+    "status": "pending",
+    "created_at": "2025-07-18 08:59:31",
+    "phone": "8888888888",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסבה 6666",
+    "items": {
+      "כנפיים": 1,
+      "כבד עוף": 1,
+      "הודו שלם": 1,
+      "המבורגר עוף": 1,
+      "בשר טחון מעורב": 1,
+      "נקניקיות בקר": 1,
+      "בשר כבש": 1,
+      "בשר אייל": 1
+    },
+    "total_amount": 310.0,
+    "cutting_instructions": NaN,
+    "closed_at": "2025-07-18 16:06:43"
+  },
+  {
+    "id": 3,
+    "customer_name": "or zoares",
+    "category": NaN,
+    "product": NaN,
+    "quantity": NaN,
+    "price": NaN,
+    "status": "pending",
+    "created_at": "2025-07-18 08:59:31",
+    "phone": "8888888888",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסבה 6666",
+    "items": {
+      "כנפיים": 1,
+      "כבד עוף": 1,
+      "הודו שלם": 1,
+      "המבורגר עוף": 1,
+      "בשר טחון מעורב": 1,
+      "נקניקיות בקר": 1,
+      "בשר כבש": 1,
+      "בשר אייל": 1
+    },
+    "total_amount": 310.0,
+    "cutting_instructions": NaN,
+    "closed_at": "2025-07-18 16:06:44"
+  },
+  {
+    "id": 3,
+    "customer_name": "or zoares",
+    "category": NaN,
+    "product": NaN,
+    "quantity": NaN,
+    "price": NaN,
+    "status": "pending",
+    "created_at": "2025-07-18 08:59:31",
+    "phone": "8888888888",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסבה 6666",
+    "items": {
+      "כנפיים": 1,
+      "כבד עוף": 1,
+      "הודו שלם": 1,
+      "המבורגר עוף": 1,
+      "בשר טחון מעורב": 1,
+      "נקניקיות בקר": 1,
+      "בשר כבש": 1,
+      "בשר אייל": 1
+    },
+    "total_amount": 310.0,
+    "cutting_instructions": NaN,
+    "closed_at": "2025-07-18 16:06:44"
+  },
+  {
+    "id": 3,
+    "customer_name": "or zoares",
+    "category": NaN,
+    "product": NaN,
+    "quantity": NaN,
+    "price": NaN,
+    "status": "pending",
+    "created_at": "2025-07-18 08:59:31",
+    "phone": "8888888888",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסבה 6666",
+    "items": {
+      "כנפיים": 1,
+      "כבד עוף": 1,
+      "הודו שלם": 1,
+      "המבורגר עוף": 1,
+      "בשר טחון מעורב": 1,
+      "נקניקיות בקר": 1,
+      "בשר כבש": 1,
+      "בשר אייל": 1
+    },
+    "total_amount": 310.0,
+    "cutting_instructions": NaN,
+    "closed_at": "2025-07-18 16:06:44"
+  },
+  {
+    "id": 2,
+    "customer_name": "זוארס ירון",
+    "category": "עופות",
+    "product": "חזה עוף",
+    "quantity": 1.0,
+    "price": 20.0,
+    "status": "completed",
+    "created_at": "2025-07-18 08:07:39",
+    "phone": NaN,
+    "address": NaN,
+    "delivery_notes": NaN,
+    "items": NaN,
+    "total_amount": NaN,
+    "cutting_instructions": NaN,
+    "closed_at": "2025-07-18 16:06:58"
+  },
+  {
+    "id": 2,
+    "customer_name": "זוארס ירון",
+    "category": "עופות",
+    "product": "חזה עוף",
+    "quantity": 1.0,
+    "price": 20.0,
+    "status": "completed",
+    "created_at": "2025-07-18 08:07:39",
+    "phone": NaN,
+    "address": NaN,
+    "delivery_notes": NaN,
+    "items": NaN,
+    "total_amount": NaN,
+    "cutting_instructions": NaN,
+    "closed_at": "2025-07-18 16:07:02"
+  },
+  {
+    "id": 3,
+    "customer_name": "or zoares",
+    "category": NaN,
+    "product": NaN,
+    "quantity": NaN,
+    "price": NaN,
+    "status": "pending",
+    "created_at": "2025-07-18 08:59:31",
+    "phone": "8888888888",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסבה 6666",
+    "items": {
+      "כנפיים": 1,
+      "כבד עוף": 1,
+      "הודו שלם": 1,
+      "המבורגר עוף": 1,
+      "בשר טחון מעורב": 1,
+      "נקניקיות בקר": 1,
+      "בשר כבש": 1,
+      "בשר אייל": 1
+    },
+    "total_amount": 310.0,
+    "cutting_instructions": NaN,
+    "closed_at": "2025-07-18 16:11:22"
+  },
+  {
+    "id": 1,
+    "customer_name": "זוארס ירון",
+    "category": "עופות",
+    "product": "עוף שלם",
+    "quantity": 1,
+    "price": 20.0,
+    "status": "completed",
+    "created_at": "2025-07-18 08:07:32",
+    "closed_at": "2025-07-18 16:12:33"
+  },
+  {
+    "id": 2,
+    "customer_name": "זוארס ירון",
+    "category": "עופות",
+    "product": "חזה עוף",
+    "quantity": 1,
+    "price": 20.0,
+    "status": "completed",
+    "created_at": "2025-07-18 08:07:39",
+    "closed_at": "2025-07-18 16:12:40"
+  },
+  {
+    "id": 3,
+    "customer_name": "or zoares",
+    "phone": "8888888888",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסבה 6666",
+    "items": {
+      "כנפיים": 1,
+      "כבד עוף": 1,
+      "הודו שלם": 1,
+      "המבורגר עוף": 1,
+      "בשר טחון מעורב": 1,
+      "נקניקיות בקר": 1,
+      "בשר כבש": 1,
+      "בשר אייל": 1
+    },
+    "total_amount": 330.0,
+    "status": "completed",
+    "created_at": "2025-07-18 08:59:31",
+    "cutting_instructions": NaN,
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:27"
+  },
+  {
+    "id": 4,
+    "customer_name": "tby hkvgg",
+    "phone": "liugilglgli",
+    "address": {
+      "street_name": "hgkikhgilil",
+      "street_number": "lhg",
+      "city": "hgliuglil"
+    },
+    "delivery_notes": "iugiugiugu",
+    "items": {
+      "בשר בקר טחון": 1,
+      "צלעות בקר": 1,
+      "נקניקיות בקר": 1,
+      "קציצות בשר": 1
+    },
+    "total_amount": 190.0,
+    "status": "pending",
+    "created_at": "2025-07-18 09:08:41",
+    "cutting_instructions": NaN,
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:28"
+  },
+  {
+    "id": 5,
+    "customer_name": "אור",
+    "phone": "05299990",
+    "address": {
+      "street_name": "גגג",
+      "street_number": "גגג",
+      "city": "גגג"
+    },
+    "delivery_notes": "",
+    "items": {
+      "עוף שלם": 0.5,
+      "חזה עוף": 0.5,
+      "שניצל עוף": 0.5,
+      "עוף טחון": 2.5,
+      "לב עוף": 2.5,
+      "ביצי הודו": 3
+    },
+    "total_amount": 236.0,
+    "status": "pending",
+    "created_at": "2025-07-18 09:40:56",
+    "cutting_instructions": NaN,
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:28"
+  },
+  {
+    "id": 6,
+    "customer_name": "zuares yaron",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "45",
+      "floor_number": "4",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסה חחחחח",
+    "cutting_instructions": [],
+    "items": {
+      "עוף שלם": 1.5,
+      "חזה עוף": 1.5,
+      "שניצל עוף": 3.0,
+      "קציצות בשר": 4,
+      "צלעות": 1.0
+    },
+    "total_amount": 475.0,
+    "status": "pending",
+    "created_at": "2025-07-18 14:41:31",
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:29"
+  },
+  {
+    "id": 7,
+    "customer_name": "ירון",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "4",
+      "floor_number": "20",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "",
+    "cutting_instructions": [],
+    "items": {
+      "עוף שלם": 1.5,
+      "חזה עוף": 2.0,
+      "שניצל עוף": 2.0,
+      "כבד עוף": 2.0
+    },
+    "total_amount": 290.0,
+    "status": "pending",
+    "created_at": "2025-07-18 14:57:42",
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:30"
+  },
+  {
+    "id": 8,
+    "customer_name": "ירון",
+    "phone": "053-560-8009",
+    "address": {
+      "street_name": "חיים עוזר",
+      "street_number": "9",
+      "floor_number": "12",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "",
+    "cutting_instructions": [
+      "סטייק בקר: פרוס"
+    ],
+    "items": {
+      "סטייק בקר": 1.0,
+      "בשר כבש": 3.5,
+      "המבורגר בקר": 6,
+      "עוף שלם": 3.0,
+      "רגליים": 0.5,
+      "חזה עוף": 2.5
+    },
+    "total_amount": 700.0,
+    "status": "pending",
+    "created_at": "2025-07-18 15:04:52",
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:30"
+  },
+  {
+    "id": 9,
+    "customer_name": "zutr;",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "עיק",
+      "street_number": "ממ",
+      "floor_number": "צצצ",
+      "city": "דדדד"
+    },
+    "delivery_notes": "",
+    "cutting_instructions": [],
+    "items": {
+      "שווארמה רצועות": 4,
+      "ירכיים עוף": 2,
+      "נקניקיות עוף": 3,
+      "עוף טחון": 1.5
+    },
+    "total_amount": 100.0,
+    "status": "pending",
+    "created_at": "2025-07-18 15:12:23",
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:31"
+  },
+  {
+    "id": 10,
+    "customer_name": "זוארץ",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "חיים עוזר",
+      "street_number": "10",
+      "floor_number": "6",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסה 11111",
+    "cutting_instructions": [
+      "פילה מדומה: פרוס"
+    ],
+    "items": {
+      "עוף שלם": 3.0,
+      "חזה עוף": 1.5,
+      "שניצל עוף": 2.0,
+      "צלעות בקר": 1.5,
+      "פילה מדומה": 2.5,
+      "בשר אסאדו": 3.0
+    },
+    "total_amount": 790.0,
+    "status": "pending",
+    "created_at": "2025-07-18 16:02:27",
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:31"
+  },
+  {
+    "id": 11,
+    "customer_name": "זוארץ",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "חיים מנדלסון",
+      "street_number": "4",
+      "floor_number": "4",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "",
+    "cutting_instructions": [],
+    "items": {
+      "עוף שלם": 0.5,
+      "חזה עוף": 0.5,
+      "שניצל עוף": 0.5,
+      "כרעיים": 1,
+      "ירכיים עוף": 1,
+      "הודו שלם": 1,
+      "בשר כבש": 0.5,
+      "בשר טחון מעורב": 0.5,
+      "נקניקיות בקר": 1,
+      "בשר עגל": 0.5,
+      "פילה מדומה": 0.5,
+      "גידים": 0.5
+    },
+    "status": "pending",
+    "created_at": "2025-07-18 23:25:33",
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:32"
+  },
+  {
+    "id": 12,
+    "customer_name": "זוארץ ירון",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "פנחס מאירי",
+      "street_number": "4",
+      "floor_number": "4",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כנסיה 77777",
+    "cutting_instructions": [
+      "עוף שלם: פרוס לחלקים",
+      "בשר אסאדו: פרוס"
+    ],
+    "items": {
+      "כרעיים": 5,
+      "כנפיים": 2.5,
+      "עוף שלם": 1.5,
+      "פרגיות שיפודים": 6,
+      "שווארמה שיפודים": 6,
+      "שווארמה רצועות": 6,
+      "בשר אסאדו": 2.5,
+      "אונטריב": 2.0
+    },
+    "status": "pending",
+    "created_at": "2025-07-19 13:57:13",
+    "category": "עופות",
+    "closed_at": "2025-07-19 13:58:33"
+  }
+]

@@ -25,21 +25,14 @@ PRODUCT_CATEGORIES = {
         "כנפיים",
         "כרעיים עוף",
         "ירכיים",
-        "ירכיים עוף",
-        "עוף עם עור",
-        "עוף בלי עור",
+        "שוקיים עוף",
+        "קורקבן עוף",
+        "טחול עוף",
         "כבד עוף",
         "לב עוף",
         "עוף טחון",
-        "נקניקיות עוף",
-        "שווארמה עוף (פרגיות)",
-        "שווארמה הודו",
-        "הודו שלם",
-        "חזה הודו",
-        "קורקבן הודו",
-        "כנפיים הודו",
-        "שוקיים הודו",
-        "ביצי הודו"
+        "טחון מיוחד (שווארמה נקבה, פרגית וחזה עוף)",
+        "שווארמה עוף (פרגיות)"
     ],
     "בשר": [
         "בשר בקר טחון",
@@ -53,13 +46,29 @@ PRODUCT_CATEGORIES = {
         "בשר עגל טחון עם שומן כבש",
         "בשר אסאדו",
         "פילה מדומה",
+        "פילה פרמיום",
         "צלעות",
         "בשר שריר",
         "אונטריב",
         "רגל פרה",
         "עצמות",
         "גידים",
-        "בשר ראש (לחי)"
+        "בשר ראש (לחי)",
+        "בשר לחיים (ראש)",
+        "אצבעות אנטריקוט",
+        "ריבס אנטריקוט",
+        "אסאדו עם עצם מקוצב 4 צלעות",
+        "צלי כתף",
+        "בננות שריר",
+        "אנטריקוט פיידלוט פרימיום",
+        "כבד אווז",
+        "שקדי עגל גרון /לב",
+        "עצמות מח",
+        "רגל פרה",
+        "גידי רגל",
+        "כתף כבש",
+        "צלעות טלה פרימיום בייבי",
+        "שומן גב כבש טרי  בדצ בית יוסף"
     ],
     "דגים": [
         "סלמון",
@@ -67,27 +76,42 @@ PRODUCT_CATEGORIES = {
         "מושט",
         "אחר"
     ],
+    "הודו": [
+        "הודו שלם",
+        "חזה הודו",
+        "שווארמה הודו נקבה",
+        "קורקבן הודו",
+        "כנפיים הודו",
+        "שוקיים הודו",
+        "לבבות הודו נקבה",
+        "גרון הודו",
+        "ביצי הודו"
+    ],
+    "המבורגר הבית": [
+        "המבורגר 160 גרם",
+        "המבורגר 220 גרם"
+    ],
     "אחר": [
         "נקניקיות עוף",
         "נקניקיות חריפות (מרגז)",
-        "צ'יפס"
+        "צ׳יפס מארז 2.5 קג תפוגן",
+        "צ׳נגו מוסדי 1.25 קג מארז",
+        "במיה כפתורים"
     ],
 }
 
 # מוצרים שנמכרים במשקל (בקילו)
 WEIGHT_PRODUCTS = {
-    "עוף שלם": True,
     "חזה עוף": True,
     "שניצל עוף": True,
     "כנפיים": True,
     "כרעיים עוף": True,
-    "ירכיים": True,
-    "ירכיים עוף": True,
-    "עוף עם עור": True,
-    "עוף בלי עור": True,
+    "קורקבן עוף": True,
+    "טחול עוף": True,
     "כבד עוף": True,
     "לב עוף": True,
     "עוף טחון": True,
+    "טחון מיוחד (שווארמה נקבה, פרגית וחזה עוף)": True,
     "בשר בקר טחון": True,
     "סטייק אנטריקוט": True,
     "צלעות בקר": True,
@@ -105,48 +129,61 @@ WEIGHT_PRODUCTS = {
     "עצמות": True,
     "גידים": True,
     "בשר ראש (לחי)": True,
-    "סלמון": True,
-    "טונה מושטפת": True,
-   
+    "בשר לחיים (ראש)": True,
+    "אצבעות אנטריקוט": True,
+    "ריבס אנטריקוט": True,
+    "אסאדו עם עצם מקוצב 4 צלעות": True,
+    "צלי כתף": True,
+    "בננות שריר": True,
+    "אנטריקוט פיידלוט פרימיום": True,
+    "כבד אווז": True,
+    "שקדי עגל גרון /לב": True,
+    "עצמות מח": True,
+    "רגל פרה": True,
+    "גידי רגל": True,
+    "צלעות טלה פרימיום בייבי": True,
+    "שומן גב כבש טרי  בדצ בית יוסף": True
 }
 
 # מוצרים שניתן לחתוך אותם
 CUTTABLE_PRODUCTS = {
     "עוף שלם": {
         "name": "עוף שלם",
-        "options": ["שלם", "פרוס", "פרוס לחלקים", "קוביות"],
+        "options": ["שלם", "פרוס לשניצל", "פרוס ל-8 חלקים", "עוף פרוס לשניצל ללא עור", "עוף פרוס ל-8 חלקים ללא עור"],
         "default": "שלם"
     },
     "חזה עוף": {
         "name": "חזה עוף",
-        "options": ["שלם", "פרוס", "קוביות"],
+        "options": ["שלם", "פרוס", "קוביות", "רצועות למוקפץ"],
         "default": "שלם"
     },
     "כרעיים עוף": {
         "name": "כרעיים עוף",
-        "options": ["שלם", "פרוס", "קוביות"],
+        "options": ["שלם", "חצוי", "שלם בלי עור", "חצוי בלי עור"],
         "default": "שלם"
     },
+    "כנפיים": {
+        "name": "כנפיים",
+        "options": ["שלם", "חצוי"],
+        "default": "שלם"
+    },
+    "שניצל עוף": {
+        "name": "שניצל עוף",
+        "options": ["שניצל פרוס עבה", "שניצל פרוס דק"],
+        "default": "שניצל פרוס עבה"
+    },
+
     "ירכיים": {
         "name": "ירכיים",
-        "options": ["שלם", "פרוס", "קוביות"],
-        "default": "שלם"
+        "options": ["עם עור", "בלי עור"],
+        "default": "עם עור"
     },
-    "ירכיים עוף": {
-        "name": "ירכיים עוף",
-        "options": ["שלם", "פרוס", "קוביות"],
-        "default": "שלם"
+    "שוקיים עוף": {
+        "name": "שוקיים עוף",
+        "options": ["שוקיים עם עור", "שוקיים בלי עור"],
+        "default": "שוקיים עם עור"
     },
-    "עוף עם עור": {
-        "name": "עוף עם עור",
-        "options": ["שלם", "פרוס", "קוביות"],
-        "default": "שלם"
-    },
-    "עוף בלי עור": {
-        "name": "עוף בלי עור",
-        "options": ["שלם", "פרוס", "קוביות"],
-        "default": "שלם"
-    },
+
     "סטייק אנטריקוט": {
         "name": "סטייק אנטריקוט", 
         "options": ["שלם", "פרוס", "קוביות"],
@@ -187,6 +224,11 @@ CUTTABLE_PRODUCTS = {
         "options": ["שלם", "פרוס", "קוביות"],
         "default": "שלם"
     },
+    "פילה פרמיום": {
+        "name": "פילה פרמיום",
+        "options": ["שלם", "פרוס", "קוביות"],
+        "default": "שלם"
+    },
     "צלעות": {
         "name": "צלעות",
         "options": ["שלם", "פרוס", "קוביות"],
@@ -204,37 +246,57 @@ CUTTABLE_PRODUCTS = {
     },
     "שווארמה עוף (פרגיות)": {
         "name": "שווארמה עוף (פרגיות)",
-        "options": ["שיפודים", "רצועות", "פרוס", "שלם"],
+        "options": ["חתוך לשיפודים", "רצועות", "פרוס דק", "סטיק פרגית"],
+        "default": "סטיק פרגית"
+    },
+    "שווארמה הודו נקבה": {
+        "name": "שווארמה הודו נקבה",
+        "options": ["חתוך לשיפודים", "רצועות", "פרוס", "שלם"],
         "default": "שלם"
     },
-    "שווארמה הודו": {
-        "name": "שווארמה הודו",
-        "options": ["שיפודים", "רצועות", "פרוס", "שלם"],
+    "צלי כתף": {
+        "name": "צלי כתף",
+        "options": ["שלם", "פרוס", "קוביות"],
+        "default": "שלם"
+    },
+    "בננות שריר": {
+        "name": "בננות שריר",
+        "options": ["שלם", "פרוס", "קוביות"],
         "default": "שלם"
     }
 }
 
 # מוצרים שנמכרים ביחידות
 UNIT_PRODUCTS = {
+    "עוף שלם": True,
     "נקניקיות עוף": True,
     "המבורגר עוף": True,
     "שווארמה עוף (פרגיות)": True,
     "הודו שלם": True,
     "חזה הודו": True,
-    "שווארמה הודו": True,
+    "שווארמה הודו נקבה": True,
     "קורקבן הודו": True,
     "כנפיים הודו": True,
     "שוקיים הודו": True,
     "גרון הודו": True,
     "כנפיים עוף": True,
+    "ירכיים": True,
+    "שוקיים עוף": True,
+    "שוקיים הודו": True,
+    "לבבות הודו נקבה": True,
+    "גרון הודו": True,
     "ביצי הודו": True,
     "המבורגר בקר": True,
     "המבורגר": True,
+    "המבורגר הבית": True,
     "נקניקיות": True,
     "נקניק חריף": True,
     "סלמון": True,
     "טונה": True,
-    "מושט": True
+    "מושט": True,
+    "כתף כבש": True,
+    "המבורגר 160 גרם": True,
+    "המבורגר 220 גרם": True
 }
 
 # הסרת מגבלת משקל - אין מגבלה
@@ -248,22 +310,25 @@ PRODUCT_PRICES = {
     "כנפיים": 15.0,
     "כרעיים": 10.0,
     "כרעיים עוף": 12.0,
+    "שוקיים עוף": 15.0,
+    "קורקבן עוף": 18.0,
+    "טחול עוף": 16.0,
     "ירכיים": 18.0,
-    "ירכיים עוף": 20.0,
-    "עוף עם עור": 45.0,
-    "עוף בלי עור": 42.0,
     "כבד עוף": 20.0,
     "לב עוף": 25.0,
     "עוף טחון": 30.0,
+    "טחון מיוחד (שווארמה נקבה, פרגית וחזה עוף)": 35.0,
     "נקניקיות עוף": 10.0,
     "המבורגר עוף": 20.0,
     "שווארמה עוף (פרגיות)": 15.0,
     "הודו שלם": 45.0,
     "חזה הודו": 35.0,
-    "שווארמה הודו": 25.0,
+    "שווארמה הודו נקבה": 25.0,
     "קורקבן הודו": 20.0,
     "כנפיים הודו": 18.0,
     "שוקיים הודו": 15.0,
+    "לבבות הודו נקבה": 22.0,
+    "גרון הודו": 18.0,
     "ביצי עוף": 10.0,
     "ביצי הודו": 12.0,
     "בשר בקר טחון": 60.0,
@@ -277,6 +342,7 @@ PRODUCT_PRICES = {
     "בשר עגל טחון עם שומן כבש": 65.0,
     "בשר אסאדו": 70.0,
     "פילה מדומה": 80.0,
+    "פילה פרמיום": 90.0,
     "צלעות": 75.0,
     "בשר שריר": 60.0,
     "אונטריב": 85.0,
@@ -289,6 +355,7 @@ PRODUCT_PRICES = {
     "מושט": 65.0,
     "אחר": 50.0,
     "המבורגר": 25.0,
+    "המבורגר הבית": 30.0,
     "נקניקיות": 18.0,
     "נקניק חריף": 22.0
 }
@@ -320,10 +387,29 @@ def get_weight_warning(cart):
     # הסרת מגבלת משקל - אין אזהרות
     return None
 
-def calculate_delivery_cost(cart):
-    """מחשבת עלות משלוח קבועה"""
-    # עלות משלוח קבועה לכל הזמנה
-    return 25.0
+def check_minimum_weight(product, weight):
+    """בודק אם המשקל עומד בדרישות המינימום למוצר"""
+    # מוצרים עם דרישת משקל מינימום
+    MIN_WEIGHT_PRODUCTS = {
+        # אין מוצרים עם דרישת משקל מינימום כרגע
+    }
+    
+    if product in MIN_WEIGHT_PRODUCTS:
+        min_weight = MIN_WEIGHT_PRODUCTS[product]
+        if weight < min_weight:
+            return False, f"משקל מינימום למוצר זה הוא {min_weight} קג"
+    
+    return True, ""
+
+def calculate_delivery_cost(cart, city=""):
+    """מחשבת עלות משלוח לפי מיקום"""
+    # עלות משלוח לבני ברק: 20 ש"ח
+    # עלות משלוח מחוץ לבני ברק: 25 ש"ח
+    
+    if city and "בני ברק" in city:
+        return 20.0
+    else:
+        return 25.0
 
 def validate_phone_number(phone):
     """מאמת מספר טלפון ישראלי"""
@@ -362,6 +448,32 @@ def format_phone_number(phone):
     else:
         return phone
 
+def validate_hebrew_text(text, field_name):
+    """מאמת שטקסט מכיל תווים בעברית בלבד"""
+    import re
+    
+    if not text or not text.strip():
+        return False, f"שדה {field_name} הוא שדה חובה"
+    
+    # הסרת רווחים מתחילת ומסוף הטקסט
+    text_clean = text.strip()
+    
+    # בדיקה שהטקסט לא ריק אחרי ניקוי
+    if not text_clean:
+        return False, f"שדה {field_name} לא יכול להיות ריק"
+    
+    # בדיקה שהטקסט מכיל לפחות תו אחד בעברית
+    hebrew_pattern = r'[\u0590-\u05FF\u200f\u200e]'
+    if not re.search(hebrew_pattern, text_clean):
+        return False, f"שדה {field_name} חייב להכיל טקסט בעברית"
+    
+    # בדיקה שהטקסט מכיל רק אותיות עבריות, רווחים, מקפים ופסיקים
+    valid_pattern = r'^[\u0590-\u05FF\u200f\u200e\s\-,\']+$'
+    if not re.match(valid_pattern, text_clean):
+        return False, f"שדה {field_name} יכול להכיל רק אותיות עבריות, רווחים, מקפים ופסיקים"
+    
+    return True, text_clean
+
 def get_cutting_instructions(cart):
     """מחזיר הוראות חיתוך לעגלה"""
     instructions = []
@@ -389,7 +501,7 @@ def main():
     # סיידבר לניווט
     st.sidebar.title("ניווט")
     
-    # הצגת מספר פריטים בעגלה
+    # הצגת העגלה המלאה בסיידבר
     if 'cart' in st.session_state and st.session_state.cart:
         cart_count = sum(st.session_state.cart.values())
         st.sidebar.info(f"🛒 עגלת קניות: {cart_count} פריטים")
@@ -397,21 +509,79 @@ def main():
         # הצגת משקל כולל
         total_weight = calculate_cart_weight(st.session_state.cart)
         if total_weight > 0:
-            st.sidebar.metric("⚖️ משקל כולל", f"{total_weight:.1f} ק\"ג")
-            
-            # הסרת אזהרות משקל - אין מגבלה
+            st.sidebar.metric("⚖️ משקל כולל", f"{total_weight:.1f} קג")
         
-        # הצגת פריטי העגלה בסיידבר
+        # הצגת הוראות חיתוך
+        cutting_instructions = get_cutting_instructions(st.session_state.cart)
+        if cutting_instructions:
+            st.sidebar.subheader("🔪 הוראות חיתוך")
+            for instruction in cutting_instructions:
+                st.sidebar.info(instruction)
+        
+        # הצגת פריטי העגלה עם אפשרויות עריכה
         st.sidebar.subheader("פריטי העגלה:")
-        for product, qty in st.session_state.cart.items():
+        for product, quantity in st.session_state.cart.items():
             is_weight_product = product in WEIGHT_PRODUCTS
             unit_text = "קילו" if is_weight_product else "יחידות"
-            st.sidebar.write(f"• {product} x{qty} {unit_text}")
+            
+            # הצגת שם המוצר וכמות
+            st.sidebar.write(f"**{product}**")
+            st.sidebar.write(f"כמות: {quantity} {unit_text}")
+            
+            # הצגת אזהרת משקל מינימום אם רלוונטי
+            if product == "עוף שלם":
+                st.sidebar.warning("⚠️ משקל מינימום ליחידה: 1.6 קג")
+            elif product == "עוף בלי עור" and is_weight_product:
+                st.sidebar.warning("⚠️ משקל מינימום: 1.6 קג")
+            
+            # כפתורים לעריכת כמות
+            col1, col2, col3 = st.sidebar.columns(3)
+            with col1:
+                if st.button("➖", key=f"sidebar_dec_{product}"):
+                    if is_weight_product:
+                        # בדיקת משקל מינימום לפני הפחתה
+                        new_weight = st.session_state.cart[product] - 0.5
+                        is_valid_weight, error_message = check_minimum_weight(product, new_weight)
+                        if not is_valid_weight and new_weight > 0:
+                            st.sidebar.error(error_message)
+                        else:
+                            if st.session_state.cart[product] > 0.5:
+                                st.session_state.cart[product] -= 0.5
+                            else:
+                                del st.session_state.cart[product]
+                    else:
+                        if st.session_state.cart[product] > 1:
+                            st.session_state.cart[product] -= 1
+                        else:
+                            del st.session_state.cart[product]
+                    st.rerun()
+            with col2:
+                st.sidebar.write(f"**{quantity}**")
+            with col3:
+                if st.button("➕", key=f"sidebar_inc_{product}"):
+                    if is_weight_product:
+                        st.session_state.cart[product] += 0.5
+                    else:
+                        st.session_state.cart[product] += 1
+                    st.rerun()
+            
+            # כפתור מחיקה
+            if st.sidebar.button(f"🗑️ מחק {product}", key=f"sidebar_remove_{product}"):
+                del st.session_state.cart[product]
+                st.rerun()
+            
+            st.sidebar.markdown("---")
         
-        # כפתור לריקון העגלה בסיידבר
+        # כפתור לריקון העגלה
         if st.sidebar.button("🗑️ רוקן עגלה", type="secondary", key="clear_cart_sidebar"):
             st.session_state.cart.clear()
             st.rerun()
+    
+    # הצגת מידע על עלות משלוח בסיידבר
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🚚 עלות משלוח")
+    st.sidebar.write("• בני ברק: 20 ש\"ח")
+    st.sidebar.write("• מחוץ לבני ברק: 25 ש\"ח")
     
     page = st.sidebar.selectbox(
         "בחר עמוד:",
@@ -434,17 +604,23 @@ def show_home_page():
     
     אנו מתמחים במכירת מוצרי בשר, עוף, דגים, הודו ומוצרים נוספים באיכות גבוהה.
     
+    **🍗 עופות טריים ארוזים בהתאמה אישית:**
+    - עוף טרי ואיכותי ארוז לפי בקשת הלקוח
+    - מכירה ביחידות ו/או במשקל
+    - חיתוך מותאם אישית לכל הזמנה
+    - הודו טרי ואיכותי
+    
     **הקטגוריות שלנו:**
     - 🍗 עופות - עוף טרי ואיכותי, הודו
     - 🥩 בשר - בשר בקר, כבש, בשר איכותי על האש
     - 🐟 דגים - סלמון, טונה ועוד
     - 🥚 אחר - מוצרים נוספים
+    - 🍔 המבורגר הבית - המבורגר ייחודי בטעמו ובניחוחו
     
     ### 🚚 משלוחים
    
     - משלוח עד הבית
-    - עלות משלוח: מוסתר בשלב זה 
-
+    - עלות משלוח: 20 ש"ח לבני ברק, 25 ש"ח מחוץ לבני ברק
     - אימות מספר טלפון אוטומטי
     
     ### 🔪 שירותי חיתוך
@@ -455,7 +631,7 @@ def show_home_page():
     ### 📞 יצירת קשר
     - טלפון: 03-5700842
     - וואטסאפ: 052-3656714
-    - שעות פעילות (למעט חגים): א'-ה' 6:00-14:00, ו' 6:00-14:00
+    - שעות פעילות (למעט חגים): א'-ה' 6:00-14:00, ו' 6:00-12:00
     """)
     
     # הצגת מוצרים מובילים
@@ -463,12 +639,12 @@ def show_home_page():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.info("🍗 שניצל ופילה עוף")
-        st.write("שניצל ופילה עוף טרי ואיכותי")
+        st.info("🍗 עופות טריים ארוזים")
+        st.write("עוף טרי ואיכותי ארוז בהתאמה אישית ביחידות ו/או במשקל")
     
     with col2:
-        st.info("🥩 עוף ובשר טחון")
-        st.write("עוף ובשר טחון טרי לקציצות והמבורגרים")
+        st.info("🥩 שניצל ופילה עוף")
+        st.write("שניצל ופילה עוף טרי ואיכותי")
     
     with col3:
         st.info("🔥 בשר על האש ובישול")
@@ -505,8 +681,13 @@ def show_order_page(orders):
             
             if is_weight_product:
                 st.write("⚖️ נמכר בקילו")
-                # בחירת כמות במשקל
-                weight_options = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+                # בחירת כמות במשקל - מותאם למוצרים עם דרישת מינימום
+                if product in ["עוף שלם", "עוף בלי עור"]:
+                    weight_options = [1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.5, 4.0, 4.5, 5.0]
+                    st.info(f"⚠️ משקל מינימום: 1.6 קג")
+                else:
+                    weight_options = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+                
                 selected_weight = st.selectbox(
                     "בחר משקל (קילו):",
                     weight_options,
@@ -529,18 +710,30 @@ def show_order_page(orders):
                 
                 if st.button(f"הוסף לעגלה - {product}", key=f"add_{product}_{category}"):
                     if selected_weight > 0:
-                        # הסרת בדיקת משקל - אין מגבלה
-                        if product not in st.session_state.cart:
-                            st.session_state.cart[product] = selected_weight
+                        # בדיקת משקל מינימום
+                        is_valid_weight, error_message = check_minimum_weight(product, selected_weight)
+                        if not is_valid_weight:
+                            st.error(error_message)
                         else:
-                            st.session_state.cart[product] += selected_weight
-                        st.success(f"{product} ({selected_weight} קילו) נוסף לעגלה!")
-                        st.rerun()
+                            if product not in st.session_state.cart:
+                                st.session_state.cart[product] = selected_weight
+                            else:
+                                st.session_state.cart[product] += selected_weight
+                            st.success(f"{product} ({selected_weight} קג) נוסף לעגלה!")
+                            st.rerun()
             
             elif is_unit_product:
                 st.write("📦 נמכר ביחידות")
-                # בחירת כמות ביחידות
-                unit_options = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20]
+                # בחירת כמות ביחידות - מותאם למוצרים עם דרישת מינימום
+                if product == "עוף שלם":
+                    unit_options = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20]
+                    st.info(f"⚠️ משקל מינימום ליחידה: 1.6 קג")
+                elif product in ["המבורגר הבית", "המבורגר 160 גרם", "המבורגר 220 גרם"]:
+                    unit_options = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+                    st.info(f"⚠️ מינימום הזמנה: 5 יחידות")
+                else:
+                    unit_options = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20]
+                
                 selected_units = st.selectbox(
                     "בחר כמות:",
                     unit_options,
@@ -593,85 +786,43 @@ def show_order_page(orders):
                     st.success(f"{product} ({quantity} יחידות) נוסף לעגלה!")
                     st.rerun()
     
-    # הצגת העגלה
+    # הצגת פרטי משלוח רק אם יש פריטים בעגלה
     if st.session_state.cart:
-        st.markdown("---")
-        st.subheader("🛒 עגלת הקניות שלך")
-        
-        # הצגת משקל כולל ואזהרות
-        total_weight = calculate_cart_weight(st.session_state.cart)
-        if total_weight > 0:
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("⚖️ משקל כולל", f"{total_weight:.1f} ק\"ג")
-            with col2:
-                st.write("📏 אין מגבלת משקל")
-            
-            # הסרת אזהרות משקל - אין מגבלה
-        
-        # הצגת הוראות חיתוך
-        cutting_instructions = get_cutting_instructions(st.session_state.cart)
-        if cutting_instructions:
-            st.subheader("🔪 הוראות חיתוך")
-            for instruction in cutting_instructions:
-                st.info(instruction)
-        
-        for product, quantity in st.session_state.cart.items():
-            price = PRODUCT_PRICES.get(product, 0)
-            is_weight_product = product in WEIGHT_PRODUCTS
-            unit_text = "קילו" if is_weight_product else "יחידות"
-            col1, col2, col3, col4, col5, col6 = st.columns([3, 1, 1, 1, 1, 1])
-            with col1:
-                st.write(product)
-            with col2:
-                st.write("מוסתר בשלב זה")
-            with col3:
-                qty_col1, qty_col2, qty_col3 = st.columns(3)
-                with qty_col1:
-                    if st.button("➖", key=f"dec_{product}_{category}"):
-                        if is_weight_product:
-                            if st.session_state.cart[product] > 0.5:
-                                st.session_state.cart[product] -= 0.5
-                            else:
-                                del st.session_state.cart[product]
-                        else:
-                            if st.session_state.cart[product] > 1:
-                                st.session_state.cart[product] -= 1
-                            else:
-                                del st.session_state.cart[product]
-                        st.rerun()
-                with qty_col2:
-                    st.write(f"**{quantity} {unit_text}**")
-                with qty_col3:
-                    if st.button("➕", key=f"inc_{product}_{category}"):
-                        if is_weight_product:
-                            st.session_state.cart[product] += 0.5
-                            st.rerun()
-                        else:
-                            st.session_state.cart[product] += 1
-                            st.rerun()
-            with col4:
-                st.write("מוסתר בשלב זה")
-            with col5:
-                if st.button(f"🗑️", key=f"remove_{product}_{category}"):
-                    del st.session_state.cart[product]
-                    st.rerun()
-        
-        st.markdown("---")
-        if st.button("🗑️ רוקן עגלה", type="secondary", key="clear_cart_order_page"):
-            st.session_state.cart.clear()
-            st.rerun()
-        
         st.markdown("---")
         st.subheader("📋 פרטי משלוח")
         with st.form("delivery_form"):
             col1, col2 = st.columns(2)
             with col1:
-                full_name = st.text_input("שם מלא *", key="full_name")
-                street_name = st.text_input("שם רחוב *", key="street_name")
-                street_number = st.text_input("מספר בית *", key="street_number")
+                full_name = st.text_input("שם מלא *", placeholder="לדוגמה: דוד כהן", key="full_name")
+                if full_name:
+                    is_valid_name, name_message = validate_hebrew_text(full_name, "שם מלא")
+                    if is_valid_name:
+                        st.success("✅ שם מלא תקין")
+                    else:
+                        st.error(f"❌ {name_message}")
+                
+                street_name = st.text_input("שם רחוב *", placeholder="לדוגמה: הרצל", key="street_name")
+                if street_name:
+                    is_valid_street, street_message = validate_hebrew_text(street_name, "שם רחוב")
+                    if is_valid_street:
+                        st.success("✅ שם רחוב תקין")
+                    else:
+                        st.error(f"❌ {street_message}")
+                
+                street_number = st.text_input("מספר בית *", placeholder="לדוגמה: 15", key="street_number")
+                if street_number and not street_number.strip().isdigit():
+                    st.error("❌ מספר בית חייב להכיל ספרות בלבד")
+                
                 floor_number = st.text_input("מספר קומה", placeholder="לדוגמה: 3, קומת קרקע, מרתף", key="floor_number")
-                city = st.text_input("עיר *", key="city")
+                
+                city = st.text_input("עיר *", placeholder="לדוגמה: בני ברק", key="city")
+                if city:
+                    is_valid_city, city_message = validate_hebrew_text(city, "עיר")
+                    if is_valid_city:
+                        st.success("✅ שם עיר תקין")
+                    else:
+                        st.error(f"❌ {city_message}")
+            
             with col2:
                 phone = st.text_input("מספר טלפון *", placeholder="לדוגמה: 050-1234567 או 02-1234567", key="phone")
                 if phone:
@@ -680,6 +831,7 @@ def show_order_page(orders):
                         st.success(f"✅ מספר טלפון תקין: {format_phone_number(clean_phone)}")
                     else:
                         st.error("❌ מספר טלפון אינו תקין")
+                
                 delivery_notes = st.text_area("הערות לשליח", placeholder="הוראות מיוחדות למשלוח, קוד כניסה לבניין וכו'", key="delivery_notes")
                 butcher_notes = st.text_area("הערות לקצב", placeholder="הוראות מיוחדות לקצב, אופן חיתוך, הכנה וכו'", key="butcher_notes")
             st.subheader("✅ אימות הזמנה")
@@ -695,12 +847,57 @@ def show_order_page(orders):
                         if cutting_choice != CUTTABLE_PRODUCTS[product]["default"]:
                             cutting_info = f" (חיתוך: {cutting_choice})"
                 st.write(f"• {product}: {quantity} {unit_text}{cutting_info}")
-            # הצגת רק עלות משלוח
-            delivery_cost = calculate_delivery_cost(st.session_state.cart)
-            st.info(f"🚚 עלות משלוח: מוסתר בשלב זה")
+            # הצגת עלות משלוח לפי העיר
+            delivery_cost = calculate_delivery_cost(st.session_state.cart, city)
+            if city and "בני ברק" in city:
+                st.info(f"🚚 עלות משלוח: {delivery_cost} ש\"ח (בני ברק)")
+            else:
+                st.info(f"🚚 עלות משלוח: {delivery_cost} ש\"ח")
             submitted = st.form_submit_button("✅ שלח הזמנה")
             if submitted:
-                if full_name and street_name and street_number and city and phone and is_valid_phone:
+                # בדיקת תקינות כל השדות
+                validation_errors = []
+                
+                # בדיקת שם מלא
+                if not full_name:
+                    validation_errors.append("שם מלא הוא שדה חובה")
+                else:
+                    is_valid_name, name_message = validate_hebrew_text(full_name, "שם מלא")
+                    if not is_valid_name:
+                        validation_errors.append(name_message)
+                
+                # בדיקת שם רחוב
+                if not street_name:
+                    validation_errors.append("שם רחוב הוא שדה חובה")
+                else:
+                    is_valid_street, street_message = validate_hebrew_text(street_name, "שם רחוב")
+                    if not is_valid_street:
+                        validation_errors.append(street_message)
+                
+                # בדיקת מספר בית
+                if not street_number:
+                    validation_errors.append("מספר בית הוא שדה חובה")
+                elif not street_number.strip().isdigit():
+                    validation_errors.append("מספר בית חייב להכיל ספרות בלבד")
+                
+                # בדיקת עיר
+                if not city:
+                    validation_errors.append("עיר היא שדה חובה")
+                else:
+                    is_valid_city, city_message = validate_hebrew_text(city, "עיר")
+                    if not is_valid_city:
+                        validation_errors.append(city_message)
+                
+                # בדיקת טלפון
+                if not phone:
+                    validation_errors.append("מספר טלפון הוא שדה חובה")
+                else:
+                    is_valid_phone, clean_phone = validate_phone_number(phone)
+                    if not is_valid_phone:
+                        validation_errors.append("מספר טלפון אינו תקין")
+                
+                # אם אין שגיאות, שלח את ההזמנה
+                if not validation_errors:
                     new_order = {
                         'id': len(orders) + 1,
                         'customer_name': full_name,
@@ -725,9 +922,12 @@ def show_order_page(orders):
                     st.session_state.cart.clear()
                     st.rerun()
                 else:
-                    st.error("אנא מלא את כל השדות המסומנים ב-*")
+                    # הצגת כל השגיאות
+                    st.error("❌ יש שגיאות בטופס:")
+                    for error in validation_errors:
+                        st.error(f"• {error}")
     else:
-        st.info("העגלה ריקה. הוסף מוצרים כדי להתחיל הזמנה!")
+        st.info("🛒 העגלה ריקה. הוסף מוצרים מהרשימה למעלה כדי להתחיל הזמנה!")
 
 def show_tracking_page(orders):
     """מציג את דף מעקב הזמנות"""

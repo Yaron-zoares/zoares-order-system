@@ -51,5 +51,95 @@
     },
     "status": "pending",
     "created_at": "2025-07-19 15:09:01"
+  },
+  {
+    "id": 3,
+    "customer_name": "ירון זוארץ",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "חפץ חיים",
+      "street_number": "5",
+      "floor_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסה",
+    "butcher_notes": "לחתוך יפה ומסודר",
+    "cutting_instructions": [],
+    "items": {
+      "ירכיים": 1.0,
+      "כרעיים עוף": 0.5,
+      "שניצל עוף": 0.5,
+      "חזה עוף": 0.5,
+      "עוף שלם": 0.5,
+      "ירכיים עוף": 0.5,
+      "הודו שלם": 1
+    },
+    "status": "pending",
+    "created_at": "2025-07-19 16:47:19"
+  },
+  {
+    "id": 4,
+    "customer_name": "ירון כהן",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "הרצל",
+      "street_number": "12",
+      "floor_number": "5",
+      "city": "רמת גן"
+    },
+    "delivery_notes": "",
+    "butcher_notes": "",
+    "cutting_instructions": [],
+    "items": {
+      "כנפיים": 0.5,
+      "כרעיים עוף": 0.5,
+      "עוף בלי עור": 1.6
+    },
+    "status": "pending",
+    "created_at": "2025-07-19 20:46:25"
+  },
+  {
+    "id": 5,
+    "customer_name": "כפיר זוארץ",
+    "phone": "052-365-6714",
+    "address": {
+      "street_name": "חפץ חיים",
+      "street_number": "57",
+      "floor_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "",
+    "butcher_notes": "",
+    "cutting_instructions": [],
+    "items": {
+      "עוף שלם - שלם": 1,
+      "חזה עוף": 0.5,
+      "שניצל עוף": 0.5,
+      "ירכיים - עם עור": 1,
+      "המבורגר הבית": 35
+    },
+    "status": "pending",
+    "created_at": "2025-07-19 22:53:21"
+  },
+  {
+    "id": 6,
+    "customer_name": "ירון אהרון",
+    "phone": "052-560-8009",
+    "address": {
+      "street_name": "חפץ חיים",
+      "street_number": "57",
+      "floor_number": "5",
+      "city": "פתח תקווה"
+    },
+    "delivery_notes": "קוד כניסה 2020",
+    "butcher_notes": "לנכות היטב ובלי שערות",
+    "cutting_instructions": [],
+    "items": {
+      "קורקבן הודו": 1,
+      "כנפיים הודו": 1,
+      "חזה הודו": 1
+    },
+    "status": "pending",
+    "created_at": "2025-07-22 21:31:30"
   }
 ]

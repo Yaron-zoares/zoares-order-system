@@ -67,3 +67,79 @@ order-manager/
 4. **מילוי פרטים**: מלא פרטי משלוח
 5. **שליחת הזמנה**: לחץ על "שלח הזמנה"
 6. **מעקב**: השתמש בדף "מעקב הזמנות" לבדיקת סטטוס 
+
+## שלבים לסנכרון עם GitHub:
+
+### 1. עדכון הקוד המקומי
+כבר ביצעת את השינויים הנדרשים בקובץ `customer_app.py`:
+- הוספת מוצרים חדשים לקטגוריית "בשר"
+- עדכון קטגוריית "המבורגר הבית" 
+- תיקון שגיאות תחביר
+- הוספת קטגוריות לדף הבית
+
+### 2. העלאה ל-GitHub
+```bash
+<code_block_to_apply_changes_from>
+```
+
+### 3. אם אין לך הרשאות push
+אם אתה לא הבעלים של ה-repository או אין לך הרשאות push, תצטרך:
+1. ליצור fork של ה-repository
+2. לבצע את השינויים ב-fork שלך
+3. ליצור Pull Request לבעל ה-repository המקורי
+
+### 4. בדיקת הסנכרון
+לאחר ההעלאה, תוכל לראות את השינויים ב-[GitHub repository](https://github.com/Yaron-zoares/zoares-order-system).
+
+## למה זה קורה?
+- **פיתוח מקומי**: האפליקציות פועלות על המחשב שלך
+- **GitHub הוא repository מרכזי**: משמש לשמירה וגיבוי של הקוד
+- **סנכרון ידני**: צריך להעלות שינויים באופן ידני
+
+האם תרצה עזרה בביצוע הסנכרון או יש לך שאלות נוספות לגבי התהליך? 
+
+## הוראות סנכרון ל-GitHub:
+
+### 1. פתח Command Prompt או PowerShell
+```bash
+<code_block_to_apply_changes_from>
+```
+
+### 2. בדוק את מצב השינויים
+```bash
+git status
+```
+זה יציג לך אילו קבצים שונו.
+
+### 3. הוסף את השינויים
+```bash
+git add .
+```
+
+### 4. צור commit
+```bash
+git commit -m "הוספת מוצרים חדשים: בשר לחיים, צלעות טלה, שומן גב כבש, המבורגר 160/220 גרם"
+```
+
+### 5. העלה ל-GitHub
+```bash
+git push origin main
+```
+
+## אם אתה נתקל בבעיות:
+
+### אם אין לך repository מקומי:
+```bash
+git clone https://github.com/Yaron-zoares/zoares-order-system.git
+cd zoares-order-system
+# העתק את הקבצים המעודכנים לתיקייה
+git add .
+git commit -m "עדכון מוצרים"
+git push origin main
+```
+
+### אם יש שגיאות authentication:
+1. ודא שיש לך Personal Access Token ב-GitHub
+2. או השתמש ב-GitHub Desktop
+
+האם תרצה שאסביר יותר על אחד מהשלבים או יש לך בעיה ספציפית? 

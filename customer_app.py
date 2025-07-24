@@ -4,6 +4,12 @@ import json
 import os
 from datetime import datetime
 import webbrowser
+from supabase import create_client, Client
+
+# הגדרות Supabase
+url = "https://YOUR_PROJECT.supabase.co"
+key = "YOUR_ANON_KEY"
+supabase: Client = create_client(url, key)
 
 # הגדרת כותרת האפליקציה
 st.set_page_config(
@@ -361,16 +367,11 @@ PRODUCT_PRICES = {
 }
 
 def load_orders():
-    """טוען את ההזמנות מקובץ JSON"""
-    if os.path.exists(ORDERS_FILE):
-        with open(ORDERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
+    response = supabase.table("orders").select("*").execute()
+    return response.data if response.data else []
 
-def save_orders(orders):
-    """שומר את ההזמנות לקובץ JSON"""
-    with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(orders, f, ensure_ascii=False, indent=2)
+def save_order(order):
+    supabase.table("orders").insert(order).execute()
 
 # אסיר את כל הפונקציות והקריאות להדפסה בהמשך הקובץ (generate_order_html, print_order, וכל כפתור הדפסה)
 
@@ -915,8 +916,7 @@ def show_order_page(orders):
                         'status': 'pending',
                         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
-                    orders.append(new_order)
-                    save_orders(orders)
+                    save_order(new_order)
                     st.success("🎉 ההזמנה נשלחה בהצלחה!")
                     st.balloons()
                     st.session_state.cart.clear()

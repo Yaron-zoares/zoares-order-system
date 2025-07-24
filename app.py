@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import webbrowser
 from io import StringIO
 import calendar
+from supabase import create_client, Client
 
 # הגדרת כותרת האפליקציה
 st.set_page_config(
@@ -156,6 +157,11 @@ ADDITIONAL_CUTTING_OPTIONS = {
     }
 }
 
+# הגדרות Supabase
+url = "https://YOUR_PROJECT.supabase.co"
+key = "YOUR_ANON_KEY"
+supabase: Client = create_client(url, key)
+
 def is_business_day(date):
     """בודק אם התאריך הוא יום עסקים (לא שבת)"""
     return date.weekday() != 5  # 5 = שבת
@@ -193,11 +199,17 @@ def get_next_order_id():
     return next_id
 
 def load_orders():
-    """טוען את ההזמנות הפעילות מקובץ JSON"""
-    if os.path.exists(ORDERS_FILE):
-        with open(ORDERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
+    response = supabase.table("orders").select("*").execute()
+    return response.data if response.data else []
+
+def save_order(order):
+    supabase.table("orders").insert(order).execute()
+
+def update_order(order_id, updated_fields):
+    supabase.table("orders").update(updated_fields).eq("id", order_id).execute()
+
+def delete_order(order_id):
+    supabase.table("orders").delete().eq("id", order_id).execute()
 
 def load_closed_orders():
     """טוען את ההזמנות הסגורות מקובץ JSON"""
@@ -205,11 +217,6 @@ def load_closed_orders():
         with open(CLOSED_ORDERS_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     return []
-
-def save_orders(orders):
-    """שומר את ההזמנות הפעילות לקובץ JSON"""
-    with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(orders, f, ensure_ascii=False, indent=2)
 
 def save_closed_orders(closed_orders):
     """שומר את ההזמנות הסגורות לקובץ JSON"""
@@ -1343,8 +1350,7 @@ def show_add_order_page(orders):
                     'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
                 
-                orders.append(new_order)
-                save_orders(orders)
+                save_order(new_order)
                 st.success("ההזמנה נוספה בהצלחה!")
                 
                 # הדפסה אוטומטית של ההזמנה
@@ -1464,7 +1470,7 @@ def show_edit_orders_page(orders):
                         selected_order['total_amount'] = total_amount
                         selected_order['status'] = status
                         
-                        save_orders(orders)
+                        update_order(selected_order['id'], selected_order)
                         st.success("ההזמנה עודכנה בהצלחה!")
                         st.rerun()
                 
@@ -1478,6 +1484,7 @@ def show_edit_orders_page(orders):
                 
                 with col3:
                     if st.form_submit_button("מחק הזמנה", type="secondary"):
+                        delete_order(selected_order['id'])
                         orders[:] = [o for o in orders if o['id'] != selected_order['id']]
                         save_orders(orders)
                         st.success("ההזמנה נמחקה בהצלחה!")
@@ -1544,7 +1551,7 @@ def show_edit_orders_page(orders):
                         selected_order['price'] = price
                         selected_order['status'] = status
                         
-                        save_orders(orders)
+                        update_order(selected_order['id'], selected_order)
                         st.success("ההזמנה עודכנה בהצלחה!")
                         st.rerun()
                 
@@ -1558,6 +1565,7 @@ def show_edit_orders_page(orders):
                 
                 with col3:
                     if st.form_submit_button("מחק הזמנה", type="secondary"):
+                        delete_order(selected_order['id'])
                         orders[:] = [o for o in orders if o['id'] != selected_order['id']]
                         save_orders(orders)
                         st.success("ההזמנה נמחקה בהצלחה!")

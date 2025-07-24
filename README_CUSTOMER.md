@@ -143,3 +143,48 @@ git push origin main
 2. או השתמש ב-GitHub Desktop
 
 האם תרצה שאסביר יותר על אחד מהשלבים או יש לך בעיה ספציפית? 
+
+כדי שהקוד שלך יעבוד, עליך להתקין את חבילת Supabase ל-Python במחשב או בסביבת השרת שבה אתה מריץ את הקוד.
+
+## איך מתקינים את הספרייה?
+
+1. **פתח את הטרמינל** (Command Prompt, PowerShell, או Terminal ב-Linux/Mac).
+2. **הקלד את הפקודה:**
+   ```bash
+   pip install supabase
+   ```
+   או, אם אתה עובד בסביבת Jupyter/Colab:
+   ```python
+   !pip install supabase
+   ```
+
+3. **ודא שההתקנה עברה בהצלחה**  
+   תוכל לבדוק ע"י הרצת:
+   ```python
+   import supabase
+   ```
+
+---
+
+### איפה להתקין?
+- **אם אתה מריץ את הקוד במחשב שלך:**  
+  התקן בסביבת העבודה שבה אתה מפתח (באותה תיקייה/venv).
+- **אם אתה מריץ על שרת/Streamlit Cloud:**  
+  הוסף את הספרייה ל-`requirements.txt`:
+  ```
+  supabase
+  ```
+  ואז Streamlit Cloud יתקין אוטומטית.
+
+---
+
+### דוגמה ל-requirements.txt:
+```
+streamlit
+supabase
+pandas
+```
+
+---
+
+אם תיתקל בשגיאה בהתקנה או בהרצה, שלח לי את הודעת השגיאה ואעזור! 

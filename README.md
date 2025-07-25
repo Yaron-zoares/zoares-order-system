@@ -64,33 +64,27 @@ pip install streamlit pandas
 #### Windows PowerShell:
 ```powershell
 # עבור לאפליקציית בעל העסק
-cd order-manager
 python -m streamlit run app.py
 
 # עבור לאפליקציית הלקוחות (בטרמינל נפרד)
-cd order-manager
 python -m streamlit run customer_app.py --server.port 8505
 ```
 
 #### Windows Command Prompt:
 ```cmd
 # עבור לאפליקציית בעל העסק
-cd order-manager
 python -m streamlit run app.py
 
 # עבור לאפליקציית הלקוחות (בטרמינל נפרד)
-cd order-manager
 python -m streamlit run customer_app.py --server.port 8505
 ```
 
 #### Linux/Mac:
 ```bash
 # עבור לאפליקציית בעל העסק
-cd order-manager
 python -m streamlit run app.py
 
 # עבור לאפליקציית הלקוחות (בטרמינל נפרד)
-cd order-manager
 python -m streamlit run customer_app.py --server.port 8505
 ```
 
@@ -130,7 +124,9 @@ python -m streamlit run customer_app.py --server.port 8505
 
 ### 📊 ניתוח נתונים
 - **סטטיסטיקות**: ניתוח הזמנות פעילות וסגורות
-- **גרפים**: הצגה ויזואלית של הנתונים
+- **גרפים**: הצגה ויזואלית של הנתונים (כולל פילוח לפי קטגוריה, פריט, לקוח, חודשים וחגי ישראל)
+- **פילוח לפי חודשים**: גרף וטבלה של כמויות הזמנות בכל חודש
+- **פילוח לפי חגי ישראל**: גרף וטבלה של כמויות הזמנות בתקופות חגים (פסח, שבועות, ראש השנה, סוכות, חנוכה, פורים)
 - **דוחות**: דוחות מפורטים על ביצועים
 
 ## 🔧 הגדרות מערכת
@@ -149,7 +145,7 @@ python -m streamlit run customer_app.py --server.port 8505
 
 ### הגדרות שמירה
 - **הזמנות פעילות**: 20 ימי עסקים
-- **הזמנות סגורות**: 60 ימי עסקים
+- **הזמנות סגורות**: 5 שנים
 - **ניקוי אוטומטי**: בעת הפעלת האפליקציה
 
 ## 📱 ממשק משתמש

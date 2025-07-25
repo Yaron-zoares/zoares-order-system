@@ -4,25 +4,10 @@ import json
 import os
 from datetime import datetime
 import webbrowser
-from supabase import create_client, Client
 
-# הגדרות Supabase
-url = "https://YOUR_PROJECT.supabase.co"
-key = "YOUR_ANON_KEY"
-supabase: Client = create_client(url, key)
-
-# הגדרת כותרת האפליקציה
-st.set_page_config(
-    page_title="הזמנת מוצרים - Zoares",
-    page_icon="🛒",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# נתיב לקובץ הנתונים
 ORDERS_FILE = 'orders.json'
+CLOSED_ORDERS_FILE = 'closed_orders.json'
 
-# רשימת מוצרים מאורגנת לפי קטגוריות
 PRODUCT_CATEGORIES = {
     "עופות": [
         "עוף שלם",
@@ -70,7 +55,6 @@ PRODUCT_CATEGORIES = {
         "כבד אווז",
         "שקדי עגל גרון /לב",
         "עצמות מח",
-        "רגל פרה",
         "גידי רגל",
         "כתף כבש",
         "צלעות טלה פרימיום בייבי",
@@ -105,8 +89,12 @@ PRODUCT_CATEGORIES = {
         "במיה כפתורים"
     ],
 }
+# הגדר גם את WEIGHT_PRODUCTS, UNIT_PRODUCTS וכו' לפי הצורך
+# הסרתי את כל הייבוא והקוד של supabase
+# החזרתי את הפונקציות המקוריות לקריאה וכתיבה ל-JSON:
 
-# מוצרים שנמכרים במשקל (בקילו)
+# --- כאן מתחיל הקוד לאחר הסרת supabase ---
+
 WEIGHT_PRODUCTS = {
     "חזה עוף": True,
     "שניצל עוף": True,
@@ -151,7 +139,38 @@ WEIGHT_PRODUCTS = {
     "שומן גב כבש טרי  בדצ בית יוסף": True
 }
 
-# מוצרים שניתן לחתוך אותם
+UNIT_PRODUCTS = {
+    "עוף שלם": True,
+    "נקניקיות עוף": True,
+    "המבורגר עוף": True,
+    "שווארמה עוף (פרגיות)": True,
+    "הודו שלם": True,
+    "חזה הודו": True,
+    "שווארמה הודו נקבה": True,
+    "קורקבן הודו": True,
+    "כנפיים הודו": True,
+    "שוקיים הודו": True,
+    "גרון הודו": True,
+    "כנפיים עוף": True,
+    "ירכיים": True,
+    "שוקיים עוף": True,
+    "שוקיים הודו": True,
+    "לבבות הודו נקבה": True,
+    "גרון הודו": True,
+    "ביצי הודו": True,
+    "המבורגר בקר": True,
+    "המבורגר": True,
+    "המבורגר הבית": True,
+    "נקניקיות": True,
+    "נקניק חריף": True,
+    "סלמון": True,
+    "טונה": True,
+    "מושט": True,
+    "כתף כבש": True,
+    "המבורגר 160 גרם": True,
+    "המבורגר 220 גרם": True
+}
+
 CUTTABLE_PRODUCTS = {
     "עוף שלם": {
         "name": "עוף שלם",
@@ -178,7 +197,6 @@ CUTTABLE_PRODUCTS = {
         "options": ["שניצל פרוס עבה", "שניצל פרוס דק"],
         "default": "שניצל פרוס עבה"
     },
-
     "ירכיים": {
         "name": "ירכיים",
         "options": ["עם עור", "בלי עור"],
@@ -189,7 +207,6 @@ CUTTABLE_PRODUCTS = {
         "options": ["שוקיים עם עור", "שוקיים בלי עור"],
         "default": "שוקיים עם עור"
     },
-
     "סטייק אנטריקוט": {
         "name": "סטייק אנטריקוט", 
         "options": ["שלם", "פרוס", "קוביות"],
@@ -272,106 +289,17 @@ CUTTABLE_PRODUCTS = {
     }
 }
 
-# מוצרים שנמכרים ביחידות
-UNIT_PRODUCTS = {
-    "עוף שלם": True,
-    "נקניקיות עוף": True,
-    "המבורגר עוף": True,
-    "שווארמה עוף (פרגיות)": True,
-    "הודו שלם": True,
-    "חזה הודו": True,
-    "שווארמה הודו נקבה": True,
-    "קורקבן הודו": True,
-    "כנפיים הודו": True,
-    "שוקיים הודו": True,
-    "גרון הודו": True,
-    "כנפיים עוף": True,
-    "ירכיים": True,
-    "שוקיים עוף": True,
-    "שוקיים הודו": True,
-    "לבבות הודו נקבה": True,
-    "גרון הודו": True,
-    "ביצי הודו": True,
-    "המבורגר בקר": True,
-    "המבורגר": True,
-    "המבורגר הבית": True,
-    "נקניקיות": True,
-    "נקניק חריף": True,
-    "סלמון": True,
-    "טונה": True,
-    "מושט": True,
-    "כתף כבש": True,
-    "המבורגר 160 גרם": True,
-    "המבורגר 220 גרם": True
-}
-
-# הסרת מגבלת משקל - אין מגבלה
-# MAX_WEIGHT_LIMIT = 8.0
-
-# מחירים למוצרים (בשקלים)
-PRODUCT_PRICES = {
-    "עוף שלם": 50.0,
-    "חזה עוף": 40.0,
-    "שניצל עוף": 35.0,
-    "כנפיים": 15.0,
-    "כרעיים": 10.0,
-    "כרעיים עוף": 12.0,
-    "שוקיים עוף": 15.0,
-    "קורקבן עוף": 18.0,
-    "טחול עוף": 16.0,
-    "ירכיים": 18.0,
-    "כבד עוף": 20.0,
-    "לב עוף": 25.0,
-    "עוף טחון": 30.0,
-    "טחון מיוחד (שווארמה נקבה, פרגית וחזה עוף)": 35.0,
-    "נקניקיות עוף": 10.0,
-    "המבורגר עוף": 20.0,
-    "שווארמה עוף (פרגיות)": 15.0,
-    "הודו שלם": 45.0,
-    "חזה הודו": 35.0,
-    "שווארמה הודו נקבה": 25.0,
-    "קורקבן הודו": 20.0,
-    "כנפיים הודו": 18.0,
-    "שוקיים הודו": 15.0,
-    "לבבות הודו נקבה": 22.0,
-    "גרון הודו": 18.0,
-    "ביצי עוף": 10.0,
-    "ביצי הודו": 12.0,
-    "בשר בקר טחון": 60.0,
-    "סטייק אנטריקוט": 55.0,
-    "צלעות בקר": 50.0,
-    "בשר כבש": 70.0,
-    "המבורגר בקר": 20.0,
-    "בשר טחון מעורב": 65.0,
-    "בשר עגל": 50.0,
-    "בשר עגל טחון": 55.0,
-    "בשר עגל טחון עם שומן כבש": 65.0,
-    "בשר אסאדו": 70.0,
-    "פילה מדומה": 80.0,
-    "פילה פרמיום": 90.0,
-    "צלעות": 75.0,
-    "בשר שריר": 60.0,
-    "אונטריב": 85.0,
-    "רגל פרה": 40.0,
-    "עצמות": 25.0,
-    "גידים": 45.0,
-    "בשר ראש (לחי)": 60.0,
-    "סלמון": 80.0,
-    "טונה": 70.0,
-    "מושט": 65.0,
-    "אחר": 50.0,
-    "המבורגר": 25.0,
-    "המבורגר הבית": 30.0,
-    "נקניקיות": 18.0,
-    "נקניק חריף": 22.0
-}
-
 def load_orders():
-    response = supabase.table("orders").select("*").execute()
-    return response.data if response.data else []
+    if os.path.exists(ORDERS_FILE):
+        with open(ORDERS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
 
 def save_order(order):
-    supabase.table("orders").insert(order).execute()
+    orders = load_orders()
+    orders.append(order)
+    with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(orders, f, ensure_ascii=False, indent=2)
 
 # אסיר את כל הפונקציות והקריאות להדפסה בהמשך הקובץ (generate_order_html, print_order, וכל כפתור הדפסה)
 
@@ -916,6 +844,7 @@ def show_order_page(orders):
                         'status': 'pending',
                         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
+                    orders.append(new_order)
                     save_order(new_order)
                     st.success("🎉 ההזמנה נשלחה בהצלחה!")
                     st.balloons()

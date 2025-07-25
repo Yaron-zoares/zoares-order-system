@@ -68,123 +68,44 @@ order-manager/
 5. **שליחת הזמנה**: לחץ על "שלח הזמנה"
 6. **מעקב**: השתמש בדף "מעקב הזמנות" לבדיקת סטטוס 
 
-## שלבים לסנכרון עם GitHub:
-
-### 1. עדכון הקוד המקומי
-כבר ביצעת את השינויים הנדרשים בקובץ `customer_app.py`:
-- הוספת מוצרים חדשים לקטגוריית "בשר"
-- עדכון קטגוריית "המבורגר הבית" 
-- תיקון שגיאות תחביר
-- הוספת קטגוריות לדף הבית
-
-### 2. העלאה ל-GitHub
-```bash
-<code_block_to_apply_changes_from>
-```
-
-### 3. אם אין לך הרשאות push
-אם אתה לא הבעלים של ה-repository או אין לך הרשאות push, תצטרך:
-1. ליצור fork של ה-repository
-2. לבצע את השינויים ב-fork שלך
-3. ליצור Pull Request לבעל ה-repository המקורי
-
-### 4. בדיקת הסנכרון
-לאחר ההעלאה, תוכל לראות את השינויים ב-[GitHub repository](https://github.com/Yaron-zoares/zoares-order-system).
-
-## למה זה קורה?
-- **פיתוח מקומי**: האפליקציות פועלות על המחשב שלך
-- **GitHub הוא repository מרכזי**: משמש לשמירה וגיבוי של הקוד
-- **סנכרון ידני**: צריך להעלות שינויים באופן ידני
-
-האם תרצה עזרה בביצוע הסנכרון או יש לך שאלות נוספות לגבי התהליך? 
-
-## הוראות סנכרון ל-GitHub:
-
-### 1. פתח Command Prompt או PowerShell
-```bash
-<code_block_to_apply_changes_from>
-```
-
-### 2. בדוק את מצב השינויים
-```bash
-git status
-```
-זה יציג לך אילו קבצים שונו.
-
-### 3. הוסף את השינויים
-```bash
-git add .
-```
-
-### 4. צור commit
-```bash
-git commit -m "הוספת מוצרים חדשים: בשר לחיים, צלעות טלה, שומן גב כבש, המבורגר 160/220 גרם"
-```
-
-### 5. העלה ל-GitHub
-```bash
-git push origin main
-```
-
-## אם אתה נתקל בבעיות:
-
-### אם אין לך repository מקומי:
-```bash
-git clone https://github.com/Yaron-zoares/zoares-order-system.git
-cd zoares-order-system
-# העתק את הקבצים המעודכנים לתיקייה
-git add .
-git commit -m "עדכון מוצרים"
-git push origin main
-```
-
-### אם יש שגיאות authentication:
-1. ודא שיש לך Personal Access Token ב-GitHub
-2. או השתמש ב-GitHub Desktop
-
-האם תרצה שאסביר יותר על אחד מהשלבים או יש לך בעיה ספציפית? 
-
-כדי שהקוד שלך יעבוד, עליך להתקין את חבילת Supabase ל-Python במחשב או בסביבת השרת שבה אתה מריץ את הקוד.
-
-## איך מתקינים את הספרייה?
-
-1. **פתח את הטרמינל** (Command Prompt, PowerShell, או Terminal ב-Linux/Mac).
-2. **הקלד את הפקודה:**
-   ```bash
-   pip install supabase
-   ```
-   או, אם אתה עובד בסביבת Jupyter/Colab:
-   ```python
-   !pip install supabase
-   ```
-
-3. **ודא שההתקנה עברה בהצלחה**  
-   תוכל לבדוק ע"י הרצת:
-   ```python
-   import supabase
-   ```
-
 ---
 
-### איפה להתקין?
-- **אם אתה מריץ את הקוד במחשב שלך:**  
-  התקן בסביבת העבודה שבה אתה מפתח (באותה תיקייה/venv).
-- **אם אתה מריץ על שרת/Streamlit Cloud:**  
-  הוסף את הספרייה ל-`requirements.txt`:
-  ```
-  supabase
-  ```
-  ואז Streamlit Cloud יתקין אוטומטית.
+## הפתרון:
 
----
+הוסף את השורה הבאה לראש הקובץ (מומלץ מיד אחרי הייבוא של המודולים):
 
-### דוגמה ל-requirements.txt:
+```python
+ORDERS_FILE = 'orders.json'
 ```
-streamlit
-supabase
-pandas
+
+אם יש לך גם קובץ להזמנות סגורות, הוסף גם:
+```python
+CLOSED_ORDERS_FILE = 'closed_orders.json'
 ```
 
 ---
 
-אם תיתקל בשגיאה בהתקנה או בהרצה, שלח לי את הודעת השגיאה ואעזור! 
+### דוגמה (התחלת הקובץ):
+
+```python
+import streamlit as st
+import pandas as pd
+import json
+import os
+from datetime import datetime
+import webbrowser
+
+ORDERS_FILE = 'orders.json'
+CLOSED_ORDERS_FILE = 'closed_orders.json'
+```
+
+---
+
+לאחר שתוסיף את ההגדרה, השגיאה תיעלם והקוד יעבוד כראוי.
+
+אם תיתקל בשגיאה נוספת, שלח לי את ההודעה ואעזור! 
+
+## סטטיסטיקות וניתוח נתונים (למנהל)
+- המערכת שומרת נתוני הזמנות סגורות ל-5 שנים ונתוני הזמנות פעילות ל-20 ימי עסקים.
+- ניתוחים כוללים: פילוח לפי קטגוריה, פריט, לקוח, חודשים וחגי ישראל.
+- הצגת גרפים מתקדמים (למנהל בלבד).

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import webbrowser
 from io import StringIO
 import calendar
-from supabase import create_client, Client
+import matplotlib.pyplot as plt
 
 # הגדרת כותרת האפליקציה
 st.set_page_config(
@@ -22,8 +22,8 @@ CLOSED_ORDERS_FILE = 'closed_orders.json'
 COUNTER_FILE = 'order_counter.json'
 
 # הגדרות שמירה
-ACTIVE_ORDER_RETENTION_DAYS = 20  # ימי עסקים להזמנות לא סופקות
-CLOSED_ORDER_RETENTION_DAYS = 60  # ימי עסקים להזמנות סגורות
+ACTIVE_ORDER_RETENTION_DAYS = 20  # ימי עסקים להזמנות פעילות
+CLOSED_ORDER_RETENTION_DAYS = 1825  # 5 שנים להזמנות סגורות
 
 # רשימת מוצרים מאורגנת לפי קטגוריות
 PRODUCT_CATEGORIES = {
@@ -157,11 +157,6 @@ ADDITIONAL_CUTTING_OPTIONS = {
     }
 }
 
-# הגדרות Supabase
-url = "https://YOUR_PROJECT.supabase.co"
-key = "YOUR_ANON_KEY"
-supabase: Client = create_client(url, key)
-
 def is_business_day(date):
     """בודק אם התאריך הוא יום עסקים (לא שבת)"""
     return date.weekday() != 5  # 5 = שבת
@@ -199,17 +194,27 @@ def get_next_order_id():
     return next_id
 
 def load_orders():
-    response = supabase.table("orders").select("*").execute()
-    return response.data if response.data else []
+    if os.path.exists(ORDERS_FILE):
+        with open(ORDERS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
 
-def save_order(order):
-    supabase.table("orders").insert(order).execute()
+def save_orders(orders):
+    with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(orders, f, ensure_ascii=False, indent=2)
 
 def update_order(order_id, updated_fields):
-    supabase.table("orders").update(updated_fields).eq("id", order_id).execute()
+    orders = load_orders()
+    for i, order in enumerate(orders):
+        if order['id'] == order_id:
+            orders[i].update(updated_fields)
+            break
+    save_orders(orders)
 
 def delete_order(order_id):
-    supabase.table("orders").delete().eq("id", order_id).execute()
+    orders = load_orders()
+    orders = [order for order in orders if order['id'] != order_id]
+    save_orders(orders)
 
 def load_closed_orders():
     """טוען את ההזמנות הסגורות מקובץ JSON"""
@@ -1350,7 +1355,7 @@ def show_add_order_page(orders):
                     'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
                 
-                save_order(new_order)
+                save_orders(orders)
                 st.success("ההזמנה נוספה בהצלחה!")
                 
                 # הדפסה אוטומטית של ההזמנה
@@ -1572,213 +1577,87 @@ def show_edit_orders_page(orders):
                         st.rerun()
 
 def show_analytics_page(orders, closed_orders):
-    """מציג את דף ניתוח הנתונים"""
-    st.header("📊 ניתוח נתונים")
-    
-    if not orders and not closed_orders:
-        st.info("אין נתונים לניתוח")
+    import pandas as pd
+    import streamlit as st
+    import matplotlib.pyplot as plt
+
+    st.header("📊 ניתוח סטטיסטי של הזמנות")
+
+    # איסוף כל ההזמנות (פעילות וסגורות)
+    all_orders = (orders or []) + (closed_orders or [])
+    rows = []
+    for order in all_orders:
+        customer = order.get('customer_name', '')
+        phone = order.get('phone', '')
+        items = order.get('items', {})
+        if not isinstance(items, dict):
+            continue  # דלג על הזמנות לא תקינות
+        for product, quantity in items.items():
+            # מצא קטגוריה
+            category = next((cat for cat, plist in PRODUCT_CATEGORIES.items() if product in plist), 'לא ידוע')
+            rows.append({
+                'customer': customer,
+                'phone': phone,
+                'product': product,
+                'category': category,
+                'quantity': quantity,
+                'date': order.get('created_at', '')
+            })
+    if not rows:
+        st.info("אין נתונים לניתוח.")
         return
-    
-    df = pd.DataFrame(orders)
-    
-    # הוספת קטגוריה ברירת מחדל להזמנות ישנות
-    if 'category' not in df.columns:
-        df['category'] = 'עופות'  # ברירת מחדל להזמנות ישנות
-    
-    # הוספת עמודות חסרות להזמנות לקוחות
-    if 'phone' not in df.columns:
-        df['phone'] = ''
-    if 'address' not in df.columns:
-        df['address'] = '{}'
-    if 'delivery_notes' not in df.columns:
-        df['delivery_notes'] = ''
-    if 'items' not in df.columns:
-        df['items'] = '{}'
-    
-    # המרת עמודת התאריך
-    df['created_at'] = pd.to_datetime(df['created_at'])
-    
-    # חישוב ערך כולל - התאמה לסוגי הזמנות שונים
-    total_values = []
-    for _, row in df.iterrows():
-        if 'total_amount' in row and row['total_amount']:
-            total_values.append(row['total_amount'])
-        else:
-            total_values.append(row['price'] * row['quantity'])
-    
-    df['total_value'] = total_values
-    
-    # גרפים
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("הזמנות לפי סטטוס")
-        status_counts = df['status'].value_counts()
-        st.bar_chart(status_counts)
-    
-    with col2:
-        st.subheader("הזמנות לפי קטגוריה")
-        category_counts = df['category'].value_counts()
-        st.bar_chart(category_counts)
-    
-    # גרפים נוספים
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("ערך הזמנות לפי סטטוס")
-        status_value = df.groupby('status')['total_value'].sum()
-        st.bar_chart(status_value)
-    
-    with col2:
-        st.subheader("ערך הזמנות לפי קטגוריה")
-        category_value = df.groupby('category')['total_value'].sum()
-        st.bar_chart(category_value)
-    
-    # ניתוח הזמנות לקוחות - סינון הזמנות עם פריטים תקינים
-    def is_valid_items(items):
-        return (isinstance(items, dict) and 
-                items != {} and 
-                not isinstance(items, (int, float, str)))
-    
-    customer_orders = df[df['items'].apply(is_valid_items)]
-    if len(customer_orders) > 0:
-        st.subheader("📊 ניתוח הזמנות לקוחות")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.write("**סטטיסטיקות הזמנות לקוחות:**")
-            st.write(f"• מספר הזמנות לקוחות: {len(customer_orders)}")
-            st.write(f"• ממוצע הזמנה: מוסתר בשלב זה")
-            st.write(f"• הזמנה הגדולה ביותר: מוסתר בשלב זה")
-            st.write(f"• הזמנה הקטנה ביותר: מוסתר בשלב זה")
-        
-        with col2:
-            st.write("**הזמנות לפי סטטוס:**")
-            customer_status_counts = customer_orders['status'].value_counts()
-            for status, count in customer_status_counts.items():
-                status_hebrew = {
-                    'pending': 'ממתין',
-                    'processing': 'בטיפול',
-                    'completed': 'הושלם',
-                    'cancelled': 'בוטל'
-                }.get(status, status)
-                st.write(f"• {status_hebrew}: {count}")
-    
-    # טבלת הלקוחות המובילים
-    st.subheader("לקוחות מובילים")
-    top_customers = df.groupby('customer_name').agg({
-        'id': 'count'
-    }).rename(columns={'id': 'מספר הזמנות'}).sort_values('מספר הזמנות', ascending=False)
-    
-    st.dataframe(top_customers.head(10), use_container_width=True)
-    
-    # טבלת המוצרים הפופולריים (להזמנות רגילות)
-    def is_regular_order(items):
-        return (not isinstance(items, dict) or 
-                items == {} or 
-                isinstance(items, (int, float, str)))
-    
-    regular_orders = df[df['items'].apply(is_regular_order)]
-    if len(regular_orders) > 0:
-        st.subheader("מוצרים פופולריים (הזמנות מנהלים)")
-        top_products = regular_orders.groupby(['category', 'product']).agg({
-            'id': 'count'
-        }).rename(columns={'id': 'מספר הזמנות'}).sort_values('מספר הזמנות', ascending=False)
-        
-        st.dataframe(top_products.head(10), use_container_width=True)
-    
-    # ניתוח פריטים פופולריים (להזמנות לקוחות)
-    if len(customer_orders) > 0:
-        st.subheader("פריטים פופולריים (הזמנות לקוחות)")
-        
-        # איסוף כל הפריטים מהזמנות לקוחות
-        all_items = {}
-        for _, order in customer_orders.iterrows():
-            items = order.get('items', {})
-            if isinstance(items, dict):
-                for item, qty in items.items():
-                    if item in all_items:
-                        all_items[item]['quantity'] += qty
-                        all_items[item]['orders'] += 1
-                    else:
-                        all_items[item] = {
-                            'quantity': qty,
-                            'orders': 1
-                            # ערך כולל מוסתר בשלב זה
-                        }
-        
-        if all_items:
-            # יצירת DataFrame לפריטים
-            items_df = pd.DataFrame.from_dict(all_items, orient='index')
-            items_df = items_df.sort_values('quantity', ascending=False)
-            
-            st.dataframe(items_df.head(10), use_container_width=True)
-    
-    # ניתוח הזמנות סגורות
-    if closed_orders:
-        st.subheader("📊 ניתוח הזמנות סגורות")
-        closed_df = pd.DataFrame(closed_orders)
-        
-        # הוספת עמודות חסרות
-        if 'category' not in closed_df.columns:
-            closed_df['category'] = 'עופות'
-        if 'phone' not in closed_df.columns:
-            closed_df['phone'] = ''
-        if 'address' not in closed_df.columns:
-            closed_df['address'] = '{}'
-        if 'delivery_notes' not in closed_df.columns:
-            closed_df['delivery_notes'] = ''
-        if 'items' not in closed_df.columns:
-            closed_df['items'] = '{}'
-        if 'closed_at' not in closed_df.columns:
-            closed_df['closed_at'] = closed_df['created_at']
-        
-        # חישוב ערך כולל
-        closed_total_values = []
-        for _, row in closed_df.iterrows():
-            if 'total_amount' in row and row['total_amount']:
-                closed_total_values.append(row['total_amount'])
-            else:
-                closed_total_values.append(row['price'] * row['quantity'])
-        
-        closed_df['total_value'] = closed_total_values
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.write("**סטטיסטיקות הזמנות סגורות:**")
-            st.write(f"• מספר הזמנות סגורות: {len(closed_df)}")
-            st.write(f"• ממוצע הזמנה: מוסתר בשלב זה")
-            st.write(f"• הזמנה הגדולה ביותר: מוסתר בשלב זה")
-            st.write(f"• הזמנה הקטנה ביותר: מוסתר בשלב זה")
-        
-        with col2:
-            st.write("**הזמנות סגורות לפי סטטוס:**")
-            closed_status_counts = closed_df['status'].value_counts()
-            for status, count in closed_status_counts.items():
-                status_hebrew = {
-                    'pending': 'ממתין',
-                    'processing': 'בטיפול',
-                    'completed': 'הושלם',
-                    'cancelled': 'בוטל'
-                }.get(status, status)
-                st.write(f"• {status_hebrew}: {count}")
-    
-    # סטטיסטיקות נוספות
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("ממוצע הזמנה פעילה", "מוסתר בשלב זה")
-    
-    with col2:
-        st.metric("הזמנה הגדולה ביותר", "מוסתר בשלב זה")
-    
-    with col3:
-        st.metric("מספר לקוחות ייחודיים", df['customer_name'].nunique())
-    
-    with col4:
-        st.metric("מספר קטגוריות", df['category'].nunique())
+    df = pd.DataFrame(rows)
+
+    # סיכום לפי קטגוריה
+    st.subheader("סיכום כמויות לפי קטגוריה")
+    cat_sum = df.groupby('category')['quantity'].sum().reset_index().sort_values('quantity', ascending=False)
+    st.dataframe(cat_sum)
+    st.bar_chart(cat_sum.set_index('category'))
+
+    # סיכום לפי פריט
+    st.subheader("סיכום כמויות לפי פריט")
+    prod_sum = df.groupby('product')['quantity'].sum().reset_index().sort_values('quantity', ascending=False)
+    st.dataframe(prod_sum)
+    st.bar_chart(prod_sum.set_index('product'))
+
+    # סיכום לפי לקוח
+    st.subheader("סיכום כמויות לפי לקוח")
+    cust_sum = df.groupby(['customer', 'phone'])['quantity'].sum().reset_index().sort_values('quantity', ascending=False)
+    st.dataframe(cust_sum)
+    st.bar_chart(cust_sum.set_index('customer'))
+
+    # המרת עמודת תאריך
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df = df.dropna(subset=['date'])
+
+    # פילוח לפי חודשים
+    st.subheader("פילוח הזמנות לפי חודשים")
+    df['month'] = df['date'].dt.to_period('M').astype(str)
+    month_sum = df.groupby('month')['quantity'].sum().reset_index().sort_values('month')
+    st.dataframe(month_sum)
+    st.bar_chart(month_sum.set_index('month'))
+
+    # פילוח לפי חגי ישראל
+    st.subheader("פילוח הזמנות לפי חגי ישראל")
+    # טווחי חגים (דוגמה לשנים 2023-2025, אפשר להרחיב)
+    holidays = [
+        ("פסח",    [("2023-04-05", "2023-04-13"), ("2024-04-22", "2024-04-30"), ("2025-04-12", "2025-04-20")]),
+        ("שבועות",  [("2023-05-25", "2023-05-27"), ("2024-06-11", "2024-06-13"), ("2025-06-01", "2025-06-03")]),
+        ("ראש השנה",[("2023-09-15", "2023-09-17"), ("2024-10-02", "2024-10-04"), ("2025-09-22", "2025-09-24")]),
+        ("סוכות",   [("2023-09-29", "2023-10-07"), ("2024-10-16", "2024-10-24"), ("2025-10-03", "2025-10-11")]),
+        ("חנוכה",  [("2023-12-07", "2023-12-15"), ("2024-12-25", "2025-01-02"), ("2025-12-14", "2025-12-22")]),
+        ("פורים",  [("2023-03-06", "2023-03-08"), ("2024-03-24", "2024-03-26"), ("2025-03-14", "2025-03-16")]),
+    ]
+    def get_holiday_name(date):
+        for name, ranges in holidays:
+            for start, end in ranges:
+                if pd.to_datetime(start) <= date <= pd.to_datetime(end):
+                    return name
+        return "לא חג"
+    df['holiday'] = df['date'].apply(get_holiday_name)
+    holiday_sum = df.groupby('holiday')['quantity'].sum().reset_index().sort_values('quantity', ascending=False)
+    st.dataframe(holiday_sum)
+    st.bar_chart(holiday_sum.set_index('holiday'))
 
 if __name__ == "__main__":
     main()

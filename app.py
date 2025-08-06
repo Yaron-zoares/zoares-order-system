@@ -1841,3 +1841,6 @@ def show_enhanced_analytics_page(orders, closed_orders):
             plt.tight_layout()
             st.pyplot(fig)
 
+if __name__ == "__main__":
+    main()
+

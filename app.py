@@ -20,6 +20,7 @@ st.set_page_config(
 ORDERS_FILE = 'orders.json'
 CLOSED_ORDERS_FILE = 'closed_orders.json'
 COUNTER_FILE = 'order_counter.json'
+CUSTOMERS_FILE = 'customers.json'  # בסיס נתונים משותף של לקוחות
 
 # הגדרות שמירה
 ACTIVE_ORDER_RETENTION_DAYS = 20  # ימי עסקים להזמנות פעילות
@@ -613,6 +614,9 @@ def main():
             st.info(f"🔧 ניקוי אוטומטי: {active_removed} הזמנות פעילות ו-{closed_removed} הזמנות סגורות הועברו/נמחקו")
         st.session_state.cleanup_done = True
     
+    # ניקוי לקוחות ישנים
+    cleanup_old_customers()
+    
     # טעינת הזמנות
     orders = load_orders()
     closed_orders = load_closed_orders()
@@ -621,7 +625,7 @@ def main():
     st.sidebar.title("ניווט")
     page = st.sidebar.selectbox(
         "בחר עמוד:",
-        ["הזמנות פעילות", "הזמנות סגורות", "הוספת הזמנה", "עריכת הזמנות", "ניתוח נתונים"]
+        ["הזמנות פעילות", "הזמנות סגורות", "הוספת הזמנה", "עריכת הזמנות", "ניתוח נתונים", "ניהול לקוחות", "ניתוח מתקדם"]
     )
     
     # כפתור ניקוי ידני
@@ -651,6 +655,10 @@ def main():
         show_edit_orders_page(orders)
     elif page == "ניתוח נתונים":
         show_analytics_page(orders, closed_orders)
+    elif page == "ניהול לקוחות":
+        show_customers_page()
+    elif page == "ניתוח מתקדם":
+        show_enhanced_analytics_page(orders, closed_orders)
 
 def show_active_orders_page(orders):
     """מציג את דף ההזמנות הפעילות"""
@@ -1659,5 +1667,177 @@ def show_analytics_page(orders, closed_orders):
     st.dataframe(holiday_sum)
     st.bar_chart(holiday_sum.set_index('holiday'))
 
-if __name__ == "__main__":
-    main()
+def load_customers():
+    """טוען את בסיס הנתונים של הלקוחות"""
+    if os.path.exists(CUSTOMERS_FILE):
+        with open(CUSTOMERS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+def save_customers(customers):
+    """שומר את בסיס הנתונים של הלקוחות"""
+    with open(CUSTOMERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(customers, f, ensure_ascii=False, indent=2)
+
+def cleanup_old_customers():
+    """מנקה לקוחות שלא הזמינו מעל 365 ימים"""
+    customers = load_customers()
+    cutoff_date = datetime.now() - timedelta(days=365)
+    customers = [c for c in customers if 
+                'last_order_date' in c and 
+                datetime.strptime(c['last_order_date'], '%Y-%m-%d %H:%M:%S') > cutoff_date]
+    save_customers(customers)
+
+def show_customers_page():
+    """מציג דף ניהול לקוחות"""
+    st.header("👥 ניהול לקוחות")
+    
+    customers = load_customers()
+    
+    if not customers:
+        st.info("אין לקוחות במערכת עדיין.")
+        return
+    
+    # סטטיסטיקות כלליות
+    total_customers = len(customers)
+    total_orders = sum(c.get('total_orders', 0) for c in customers)
+    total_revenue = sum(c.get('total_spent', 0) for c in customers)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("סה״כ לקוחות", total_customers)
+    with col2:
+        st.metric("סה״כ הזמנות", total_orders)
+    with col3:
+        st.metric("סה״כ הכנסות", f"₪{total_revenue:,.0f}")
+    
+    st.subheader("רשימת לקוחות")
+    
+    # טבלת לקוחות
+    customer_data = []
+    for customer in customers:
+        customer_data.append({
+            'מזהה': customer['id'],
+            'שם מלא': customer['full_name'],
+            'טלפון': customer['phone'],
+            'הזמנות': customer.get('total_orders', 0),
+            'סכום כולל': f"₪{customer.get('total_spent', 0):,.0f}",
+            'תאריך יצירה': customer.get('created_at', ''),
+            'הזמנה אחרונה': customer.get('last_order_date', '')
+        })
+    
+    df = pd.DataFrame(customer_data)
+    st.dataframe(df, use_container_width=True)
+    
+    # אפשרות להורדת נתונים
+    csv = df.to_csv(index=False, encoding='utf-8-sig')
+    st.download_button(
+        label="📥 הורד נתוני לקוחות",
+        data=csv,
+        file_name="customers_data.csv",
+        mime="text/csv"
+    )
+
+def show_enhanced_analytics_page(orders, closed_orders):
+    """מציג דף ניתוח מתקדם עם נתוני לקוחות"""
+    st.header("📊 ניתוח מתקדם")
+    
+    customers = load_customers()
+    all_orders = orders + closed_orders
+    
+    # ניתוח לקוחות
+    if customers:
+        st.subheader("📈 ניתוח לקוחות")
+        
+        # לקוחות לפי כמות הזמנות
+        customer_orders = {}
+        for order in all_orders:
+            if 'customer_id' in order:
+                customer_id = order['customer_id']
+                if customer_id not in customer_orders:
+                    customer_orders[customer_id] = 0
+                customer_orders[customer_id] += 1
+        
+        if customer_orders:
+            # גרף לקוחות לפי כמות הזמנות
+            fig, ax = plt.subplots(figsize=(10, 6))
+            customer_names = []
+            order_counts = []
+            
+            for customer_id, count in sorted(customer_orders.items(), key=lambda x: x[1], reverse=True)[:10]:
+                customer = next((c for c in customers if c['id'] == customer_id), None)
+                if customer:
+                    customer_names.append(customer['full_name'])
+                    order_counts.append(count)
+            
+            if customer_names:
+                ax.bar(range(len(customer_names)), order_counts)
+                ax.set_xlabel('לקוחות')
+                ax.set_ylabel('כמות הזמנות')
+                ax.set_title('לקוחות לפי כמות הזמנות')
+                ax.set_xticks(range(len(customer_names)))
+                ax.set_xticklabels(customer_names, rotation=45, ha='right')
+                plt.tight_layout()
+                st.pyplot(fig)
+    
+    # ניתוח מוצרים עם קישור ללקוחות
+    st.subheader("🛒 ניתוח מוצרים")
+    
+    product_stats = {}
+    for order in all_orders:
+        for product, quantity in order.get('items', {}).items():
+            if product not in product_stats:
+                product_stats[product] = {
+                    'total_quantity': 0,
+                    'total_orders': 0,
+                    'customers': set()
+                }
+            product_stats[product]['total_quantity'] += quantity
+            product_stats[product]['total_orders'] += 1
+            if 'customer_id' in order:
+                product_stats[product]['customers'].add(order['customer_id'])
+    
+    if product_stats:
+        # טבלת מוצרים פופולריים
+        product_data = []
+        for product, stats in sorted(product_stats.items(), key=lambda x: x[1]['total_quantity'], reverse=True):
+            product_data.append({
+                'מוצר': product,
+                'כמות כוללת': stats['total_quantity'],
+                'כמות הזמנות': stats['total_orders'],
+                'לקוחות ייחודיים': len(stats['customers'])
+            })
+        
+        df_products = pd.DataFrame(product_data)
+        st.dataframe(df_products, use_container_width=True)
+    
+    # ניתוח זמנים
+    st.subheader("📅 ניתוח זמנים")
+    
+    if all_orders:
+        # הזמנות לפי חודש
+        monthly_orders = {}
+        for order in all_orders:
+            if 'created_at' in order:
+                try:
+                    order_date = datetime.strptime(order['created_at'], '%Y-%m-%d %H:%M:%S')
+                    month_key = order_date.strftime('%Y-%m')
+                    if month_key not in monthly_orders:
+                        monthly_orders[month_key] = 0
+                    monthly_orders[month_key] += 1
+                except:
+                    continue
+        
+        if monthly_orders:
+            fig, ax = plt.subplots(figsize=(12, 6))
+            months = sorted(monthly_orders.keys())
+            counts = [monthly_orders[month] for month in months]
+            
+            ax.plot(months, counts, marker='o')
+            ax.set_xlabel('חודש')
+            ax.set_ylabel('כמות הזמנות')
+            ax.set_title('הזמנות לפי חודש')
+            ax.tick_params(axis='x', rotation=45)
+            plt.tight_layout()
+            st.pyplot(fig)
+

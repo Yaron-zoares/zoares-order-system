@@ -2,11 +2,12 @@ import streamlit as st
 import pandas as pd
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import webbrowser
 
 ORDERS_FILE = 'orders.json'
 CLOSED_ORDERS_FILE = 'closed_orders.json'
+CUSTOMERS_FILE = 'customers.json'  # בסיס נתונים משותף של לקוחות
 
 PRODUCT_CATEGORIES = {
     "עופות": [
@@ -27,25 +28,20 @@ PRODUCT_CATEGORIES = {
     ],
     "בשר": [
         "בשר בקר טחון",
-        "סטייק אנטריקוט",
         "צלעות בקר",
         "בשר כבש",
-        "המבורגר בקר",
-        "בשר טחון מעורב",
-        "בשר עגל",
+        "המבורגר הבית",
+        "טחון קוקטייל הבית",
         "בשר עגל טחון",
         "בשר עגל טחון עם שומן כבש",
-        "בשר אסאדו",
         "פילה מדומה",
         "פילה פרמיום",
         "צלעות",
         "בשר שריר",
         "אונטריב",
         "רגל פרה",
-        "עצמות",
-        "גידים",
         "בשר ראש (לחי)",
-        "בשר לחיים (ראש)",
+
         "אצבעות אנטריקוט",
         "ריבס אנטריקוט",
         "אסאדו עם עצם מקוצב 4 צלעות",
@@ -67,12 +63,12 @@ PRODUCT_CATEGORIES = {
         "אחר"
     ],
     "הודו": [
-        "הודו שלם",
-        "חזה הודו",
+        "הודו שלם נקבה",
+        "חזה הודו נקבה",
         "שווארמה הודו נקבה",
-        "קורקבן הודו",
-        "כנפיים הודו",
-        "שוקיים הודו",
+        "קורקבן הודו נקבה",
+        "כנפיים הודו נקבה",
+        "שוקיים הודו נקבה",
         "לבבות הודו נקבה",
         "גרון הודו",
         "ביצי הודו"
@@ -107,23 +103,18 @@ WEIGHT_PRODUCTS = {
     "עוף טחון": True,
     "טחון מיוחד (שווארמה נקבה, פרגית וחזה עוף)": True,
     "בשר בקר טחון": True,
-    "סטייק אנטריקוט": True,
     "צלעות בקר": True,
     "בשר כבש": True,
-    "בשר טחון מעורב": True,
-    "בשר עגל": True,
+    "טחון קוקטייל הבית": True,
     "בשר עגל טחון": True,
     "בשר עגל טחון עם שומן כבש": True,
-    "בשר אסאדו": True,
     "פילה מדומה": True,
     "צלעות": True,
     "בשר שריר": True,
     "אונטריב": True,
     "רגל פרה": True,
-    "עצמות": True,
-    "גידים": True,
     "בשר ראש (לחי)": True,
-    "בשר לחיים (ראש)": True,
+
     "אצבעות אנטריקוט": True,
     "ריבס אנטריקוט": True,
     "אסאדו עם עצם מקוצב 4 צלעות": True,
@@ -144,21 +135,20 @@ UNIT_PRODUCTS = {
     "נקניקיות עוף": True,
     "המבורגר עוף": True,
     "שווארמה עוף (פרגיות)": True,
-    "הודו שלם": True,
-    "חזה הודו": True,
+    "הודו שלם נקבה": True,
+    "חזה הודו נקבה": True,
     "שווארמה הודו נקבה": True,
-    "קורקבן הודו": True,
-    "כנפיים הודו": True,
-    "שוקיים הודו": True,
+    "קורקבן הודו נקבה": True,
+    "כנפיים הודו נקבה": True,
+    "שוקיים הודו נקבה": True,
     "גרון הודו": True,
     "כנפיים עוף": True,
     "ירכיים": True,
     "שוקיים עוף": True,
-    "שוקיים הודו": True,
     "לבבות הודו נקבה": True,
     "גרון הודו": True,
     "ביצי הודו": True,
-    "המבורגר בקר": True,
+    "המבורגר הבית": True,
     "המבורגר": True,
     "המבורגר הבית": True,
     "נקניקיות": True,
@@ -207,11 +197,7 @@ CUTTABLE_PRODUCTS = {
         "options": ["שוקיים עם עור", "שוקיים בלי עור"],
         "default": "שוקיים עם עור"
     },
-    "סטייק אנטריקוט": {
-        "name": "סטייק אנטריקוט", 
-        "options": ["שלם", "פרוס", "קוביות"],
-        "default": "שלם"
-    },
+
     "צלעות בקר": {
         "name": "צלעות בקר",
         "options": ["שלם", "פרוס", "קוביות", "טחון"],
@@ -222,11 +208,7 @@ CUTTABLE_PRODUCTS = {
         "options": ["שלם", "פרוס", "קוביות"],
         "default": "שלם"
     },
-    "בשר עגל": {
-        "name": "בשר עגל",
-        "options": ["שלם", "פרוס", "קוביות"],
-        "default": "שלם"
-    },
+
     "בשר עגל טחון": {
         "name": "בשר עגל טחון",
         "options": ["שלם", "פרוס", "קוביות"],
@@ -234,11 +216,6 @@ CUTTABLE_PRODUCTS = {
     },
     "בשר עגל טחון עם שומן כבש": {
         "name": "בשר עגל טחון עם שומן כבש",
-        "options": ["שלם", "פרוס", "קוביות"],
-        "default": "שלם"
-    },
-    "בשר אסאדו": {
-        "name": "בשר אסאדו",
         "options": ["שלם", "פרוס", "קוביות"],
         "default": "שלם"
     },
@@ -296,7 +273,14 @@ def load_orders():
     return []
 
 def save_order(order):
+    """שומר הזמנה עם קישור ללקוח"""
     orders = load_orders()
+    order_total = 0.0
+    for product, quantity in order['items'].items():
+        if product in PRODUCT_PRICES:
+            order_total += PRODUCT_PRICES[product] * quantity
+    if 'customer_id' in order:
+        update_customer_stats(order['customer_id'], order_total)
     orders.append(order)
     with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
         json.dump(orders, f, ensure_ascii=False, indent=2)
@@ -408,24 +392,169 @@ def get_cutting_instructions(cart):
     instructions = []
     for product, quantity in cart.items():
         if product in CUTTABLE_PRODUCTS:
-            # נסה לקבל את בחירת החיתוך מ-session state
-            cutting_key = f"cutting_{product}"
-            if cutting_key in st.session_state:
-                cutting_choice = st.session_state[cutting_key]
-                if cutting_choice != CUTTABLE_PRODUCTS[product]["default"]:
-                    instructions.append(f"{product}: {cutting_choice}")
-            else:
-                # אם לא נבחר, השתמש בברירת מחדל
-                instructions.append(f"{product}: {CUTTABLE_PRODUCTS[product]['default']}")
-    
+            cutting_option = cart.get(f"{product}_cutting", CUTTABLE_PRODUCTS[product]["default"])
+            instructions.append(f"{product}: {cutting_option}")
     return instructions
 
+def load_customers():
+    """טוען את בסיס הנתונים של הלקוחות"""
+    if os.path.exists(CUSTOMERS_FILE):
+        with open(CUSTOMERS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+def save_customers(customers):
+    """שומר את בסיס הנתונים של הלקוחות"""
+    with open(CUSTOMERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(customers, f, ensure_ascii=False, indent=2)
+
+def find_or_create_customer(phone, full_name):
+    """מוצא לקוח קיים או יוצר חדש"""
+    customers = load_customers()
+    for customer in customers:
+        if customer['phone'] == phone:
+            if customer['full_name'] != full_name:
+                customer['full_name'] = full_name
+                customer['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                save_customers(customers)
+            return customer['id']
+    
+    new_customer = {
+        'id': len(customers) + 1,
+        'phone': phone,
+        'full_name': full_name,
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'total_orders': 0,
+        'total_spent': 0.0
+    }
+    customers.append(new_customer)
+    save_customers(customers)
+    return new_customer['id']
+
+def update_customer_stats(customer_id, order_total):
+    """מעדכן סטטיסטיקות לקוח"""
+    customers = load_customers()
+    for customer in customers:
+        if customer['id'] == customer_id:
+            customer['total_orders'] += 1
+            customer['total_spent'] += order_total
+            customer['last_order_date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            save_customers(customers)
+            break
+
+def cleanup_old_customers():
+    """מנקה לקוחות שלא הזמינו מעל 365 ימים"""
+    customers = load_customers()
+    cutoff_date = datetime.now() - timedelta(days=365)
+    customers = [c for c in customers if 
+                'last_order_date' in c and 
+                datetime.strptime(c['last_order_date'], '%Y-%m-%d %H:%M:%S') > cutoff_date]
+    save_customers(customers)
+
 def main():
+    # הוספת CSS ליישור לימין ולשיפור הממשק
+    st.markdown("""
+    <style>
+    /* יישור כל הטקסט לימין */
+    .stMarkdown, .stText, .stSelectbox, .stNumberInput, .stButton, .stInfo, .stSuccess, .stWarning, .stError {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור כותרות לימין */
+    h1, h2, h3, h4, h5, h6 {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור תיבות קלט לימין */
+    .stTextInput > div > div > input {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור תיבות בחירה לימין */
+    .stSelectbox > div > div > div {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור כפתורים לימין */
+    .stButton > button {
+        text-align: center !important;
+    }
+    
+    /* יישור העגלה בסיידבר לימין */
+    .css-1d391kg {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור כל הטקסטים בסיידבר */
+    .css-1d391kg .stMarkdown, .css-1d391kg .stText {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור כותרות בסיידבר */
+    .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3 {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור תיבות מידע לימין */
+    .stAlert {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור טבלאות לימין */
+    .stDataFrame {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור רשימות לימין */
+    ul, ol {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור פסקאות לימין */
+    p {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור תיבות מידע לימין */
+    .stInfo, .stSuccess, .stWarning, .stError {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור עמודות לימין */
+    .row-widget {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    
+    /* יישור תיבות מידע בסיידבר */
+    .css-1d391kg .stInfo, .css-1d391kg .stSuccess, .css-1d391kg .stWarning, .css-1d391kg .stError {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.title("🛒 Zoares - הזמנת מוצרים")
     st.markdown("---")
     
     # טעינת הזמנות
     orders = load_orders()
+    
+    # ניקוי לקוחות ישנים
+    cleanup_old_customers()
     
     # סיידבר לניווט
     st.sidebar.title("ניווט")
@@ -610,16 +739,18 @@ def show_order_page(orders):
             
             if is_weight_product:
                 st.write("⚖️ נמכר בקילו")
-                # בחירת כמות במשקל - מותאם למוצרים עם דרישת מינימום
+                # בחירת כמות במשקל - ללא מגבלה
                 if product in ["עוף שלם", "עוף בלי עור"]:
-                    weight_options = [1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.5, 4.0, 4.5, 5.0]
                     st.info(f"⚠️ משקל מינימום: 1.6 קג")
+                    min_weight = 1.6
                 else:
-                    weight_options = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+                    min_weight = 0.5
                 
-                selected_weight = st.selectbox(
+                selected_weight = st.number_input(
                     "בחר משקל (קילו):",
-                    weight_options,
+                    min_value=min_weight,
+                    value=min_weight,
+                    step=0.1,
                     key=f"weight_{product}_{category}"
                 )
                 
@@ -653,19 +784,21 @@ def show_order_page(orders):
             
             elif is_unit_product:
                 st.write("📦 נמכר ביחידות")
-                # בחירת כמות ביחידות - מותאם למוצרים עם דרישת מינימום
+                # בחירת כמות ביחידות - ללא מגבלה
                 if product == "עוף שלם":
-                    unit_options = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20]
                     st.info(f"⚠️ משקל מינימום ליחידה: 1.6 קג")
+                    min_units = 1
                 elif product in ["המבורגר הבית", "המבורגר 160 גרם", "המבורגר 220 גרם"]:
-                    unit_options = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
                     st.info(f"⚠️ מינימום הזמנה: 5 יחידות")
+                    min_units = 5
                 else:
-                    unit_options = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20]
+                    min_units = 1
                 
-                selected_units = st.selectbox(
+                selected_units = st.number_input(
                     "בחר כמות:",
-                    unit_options,
+                    min_value=min_units,
+                    value=min_units,
+                    step=1,
                     key=f"units_{product}_{category}"
                 )
                 
@@ -827,8 +960,12 @@ def show_order_page(orders):
                 
                 # אם אין שגיאות, שלח את ההזמנה
                 if not validation_errors:
+                    # יצירת או מציאת לקוח
+                    customer_id = find_or_create_customer(format_phone_number(clean_phone), full_name)
+                    
                     new_order = {
                         'id': len(orders) + 1,
+                        'customer_id': customer_id,  # קישור ללקוח
                         'customer_name': full_name,
                         'phone': format_phone_number(clean_phone),
                         'address': {
@@ -848,7 +985,10 @@ def show_order_page(orders):
                     save_order(new_order)
                     st.success("🎉 ההזמנה נשלחה בהצלחה!")
                     st.balloons()
+                    # ניקוי העגלה אחרי הצגת הודעת ההצלחה
                     st.session_state.cart.clear()
+                    # הוספת דגל שמציין שההזמנה נשלחה בהצלחה
+                    st.session_state.order_sent = True
                     st.rerun()
                 else:
                     # הצגת כל השגיאות
@@ -856,7 +996,14 @@ def show_order_page(orders):
                     for error in validation_errors:
                         st.error(f"• {error}")
     else:
-        st.info("🛒 העגלה ריקה. הוסף מוצרים מהרשימה למעלה כדי להתחיל הזמנה!")
+        # בדיקה אם הזמנה נשלחה בהצלחה
+        if st.session_state.get('order_sent', False):
+            st.success("🎉 ההזמנה נשלחה בהצלחה! תודה על הזמנתך!")
+            st.info("💡 תוכל להוסיף מוצרים חדשים לעגלה ולהמשיך להזמין")
+            # איפוס הדגל
+            st.session_state.order_sent = False
+        else:
+            st.info("🛒 העגלה ריקה. הוסף מוצרים מהרשימה למעלה כדי להתחיל הזמנה!")
 
 def show_tracking_page(orders):
     """מציג את דף מעקב הזמנות"""

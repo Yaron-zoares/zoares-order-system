@@ -7,6 +7,18 @@ import webbrowser
 from io import StringIO
 import calendar
 import matplotlib.pyplot as plt
+from database import (
+    init_database, load_orders, save_order, load_closed_orders,
+    load_customers, save_customers, find_or_create_customer, 
+    update_customer_stats, cleanup_old_customers, cleanup_old_orders,
+    update_order, delete_order, move_order_to_closed, get_next_order_id,
+    import_existing_data
+)
+
+# אתחול מסד הנתונים וייבוא נתונים קיימים
+if not os.path.exists('zoares_central.db'):
+    init_database()
+    import_existing_data()
 
 # הגדרת כותרת האפליקציה
 st.set_page_config(
@@ -16,11 +28,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# נתיבים לקבצי הנתונים
-ORDERS_FILE = 'orders.json'
-CLOSED_ORDERS_FILE = 'closed_orders.json'
-COUNTER_FILE = 'order_counter.json'
-CUSTOMERS_FILE = 'customers.json'  # בסיס נתונים משותף של לקוחות
+# הגדרות מסד הנתונים המרכזי
+# כל הנתונים נשמרים במסד הנתונים SQLite המרכזי
 
 # הגדרות שמירה
 ACTIVE_ORDER_RETENTION_DAYS = 20  # ימי עסקים להזמנות פעילות
@@ -79,6 +88,101 @@ PRODUCT_CATEGORIES = {
         "צ'יפס"
     ]
 }
+
+# הגדרת מוצרים שנמכרים במשקל (ק"ג) או ביחידות
+WEIGHT_PRODUCTS = {
+    "חזה עוף": True,
+    "שניצל עוף": True,
+    "כנפיים": True,
+    "כרעיים עוף": True,
+    "קורקבן עוף": True,
+    "טחול עוף": True,
+    "כבד עוף": True,
+    "לב עוף": True,
+    "עוף טחון": True,
+    "טחון מיוחד (שווארמה נקבה, פרגית וחזה עוף)": True,
+    "בשר בקר טחון": True,
+    "צלעות בקר": True,
+    "בשר כבש": True,
+    "טחון קוקטייל הבית": True,
+    "בשר עגל טחון": True,
+    "בשר עגל טחון עם שומן כבש": True,
+    "פילה מדומה": True,
+    "צלעות": True,
+    "בשר שריר": True,
+    "אונטריב": True,
+    "רגל פרה": True,
+    "אצבעות אנטריקוט": True,
+    "ריבס אנטריקוט": True,
+    "אסאדו עם עצם מקוצב 4 צלעות": True,
+    "צלי כתף": True,
+    "בננות שריר": True,
+    "אנטריקוט פיידלוט פרימיום": True,
+    "כבד אווז": True,
+    "שקדי עגל גרון /לב": True,
+    "עצמות מח": True,
+    "גידי רגל": True,
+    "צלעות טלה פרימיום בייבי": True,
+    "שומן גב כבש טרי  בדצ בית יוסף": True
+}
+
+UNIT_PRODUCTS = {
+    "עוף שלם": True,
+    "נקניקיות עוף": True,
+    "המבורגר עוף": True,
+    "שווארמה עוף (פרגיות)": True,
+    "הודו שלם נקבה": True,
+    "חזה הודו נקבה": True,
+    "שווארמה הודו נקבה": True,
+    "קורקבן הודו נקבה": True,
+    "כנפיים הודו נקבה": True,
+    "שוקיים הודו נקבה": True,
+    "גרון הודו": True,
+    "כנפיים עוף": True,
+    "ירכיים": True,
+    "שוקיים עוף": True,
+    "לבבות הודו נקבה": True,
+    "גרון הודו": True,
+    "ביצי הודו": True,
+    "המבורגר הבית": True,
+    "המבורגר": True,
+    "המבורגר הבית": True,
+    "נקניקיות": True,
+    "נקניק חריף": True,
+    "סלמון": True,
+    "טונה": True,
+    "מושט": True,
+    "כתף כבש": True,
+    "המבורגר 160 גרם": True,
+    "המבורגר 220 גרם": True
+}
+
+def get_product_unit(product_name):
+    """מחזיר את היחידה המתאימה למוצר (ק"ג או יחידות)"""
+    # הסרת הוראות חיתוך מהשם אם קיימות
+    base_product = product_name.split(' - ')[0] if ' - ' in product_name else product_name
+    
+    if base_product in WEIGHT_PRODUCTS:
+        return "ק\"ג"
+    elif base_product in UNIT_PRODUCTS:
+        return "יחידות"
+    else:
+        # ברירת מחדל - בדיקה לפי קטגוריה
+        for category, products in PRODUCT_CATEGORIES.items():
+            if base_product in products:
+                # מוצרי בשר ועוף בדרך כלל נמכרים במשקל
+                if category in ["עופות", "בשר"]:
+                    return "ק\"ג"
+                # מוצרים אחרים בדרך כלל נמכרים ביחידות
+                else:
+                    return "יחידות"
+        # אם לא נמצא, ברירת מחדל ליחידות
+        return "יחידות"
+
+def format_quantity_with_unit(quantity, product_name):
+    """מעצב כמות עם יחידה מתאימה"""
+    unit = get_product_unit(product_name)
+    return f"{quantity} {unit}"
 
 # מחירים לפי מוצר (לשימוש בדף הוספת הזמנה ועריכת הזמנות לקוחות)
 PRODUCT_PRICES = {
@@ -174,109 +278,13 @@ def get_business_days_before(target_date, days):
     
     return current_date
 
-def load_order_counter():
-    """טוען את מונה ההזמנות"""
-    if os.path.exists(COUNTER_FILE):
-        with open(COUNTER_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return {"next_order_id": 1}
+# הפונקציות לניהול מונה הזמנות מיובאות מ-database.py
 
-def save_order_counter(counter):
-    """שומר את מונה ההזמנות"""
-    with open(COUNTER_FILE, 'w', encoding='utf-8') as f:
-        json.dump(counter, f, ensure_ascii=False, indent=2)
+# הפונקציות לניהול הזמנות מיובאות מ-database.py
 
-def get_next_order_id():
-    """מחזיר את מספר ההזמנה הבא"""
-    counter = load_order_counter()
-    next_id = counter["next_order_id"]
-    counter["next_order_id"] += 1
-    save_order_counter(counter)
-    return next_id
+# הפונקציות לניהול הזמנות סגורות מיובאות מ-database.py
 
-def load_orders():
-    if os.path.exists(ORDERS_FILE):
-        with open(ORDERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
-
-def save_orders(orders):
-    with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(orders, f, ensure_ascii=False, indent=2)
-
-def update_order(order_id, updated_fields):
-    orders = load_orders()
-    for i, order in enumerate(orders):
-        if order['id'] == order_id:
-            orders[i].update(updated_fields)
-            break
-    save_orders(orders)
-
-def delete_order(order_id):
-    orders = load_orders()
-    orders = [order for order in orders if order['id'] != order_id]
-    save_orders(orders)
-
-def load_closed_orders():
-    """טוען את ההזמנות הסגורות מקובץ JSON"""
-    if os.path.exists(CLOSED_ORDERS_FILE):
-        with open(CLOSED_ORDERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
-
-def save_closed_orders(closed_orders):
-    """שומר את ההזמנות הסגורות לקובץ JSON"""
-    with open(CLOSED_ORDERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(closed_orders, f, ensure_ascii=False, indent=2)
-
-def move_order_to_closed(order):
-    """מעביר הזמנה להזמנות סגורות"""
-    closed_orders = load_closed_orders()
-    
-    # הוספת תאריך סגירה
-    order['closed_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    closed_orders.append(order)
-    save_closed_orders(closed_orders)
-
-def cleanup_old_orders():
-    """מנקה הזמנות ישנות לפי מדיניות השמירה"""
-    today = datetime.now()
-    
-    # ניקוי הזמנות פעילות ישנות (לא סופקות)
-    orders = load_orders()
-    cutoff_date_active = get_business_days_before(today, ACTIVE_ORDER_RETENTION_DAYS)
-    
-    orders_to_remove = []
-    for order in orders:
-        order_date = datetime.strptime(order['created_at'], '%Y-%m-%d %H:%M:%S')
-        if order_date < cutoff_date_active and order['status'] != 'completed':
-            orders_to_remove.append(order)
-    
-    for order in orders_to_remove:
-        orders.remove(order)
-        move_order_to_closed(order)
-    
-    if orders_to_remove:
-        save_orders(orders)
-    
-    # ניקוי הזמנות סגורות ישנות
-    closed_orders = load_closed_orders()
-    cutoff_date_closed = get_business_days_before(today, CLOSED_ORDER_RETENTION_DAYS)
-    
-    closed_orders_to_remove = []
-    for order in closed_orders:
-        closed_date = datetime.strptime(order.get('closed_at', order['created_at']), '%Y-%m-%d %H:%M:%S')
-        if closed_date < cutoff_date_closed:
-            closed_orders_to_remove.append(order)
-    
-    for order in closed_orders_to_remove:
-        closed_orders.remove(order)
-    
-    if closed_orders_to_remove:
-        save_closed_orders(closed_orders)
-    
-    return len(orders_to_remove), len(closed_orders_to_remove)
+# פונקציית הניקוי מיובאת מ-database.py
 
 def generate_order_html(order):
     """מייצר HTML להדפסת הזמנה"""
@@ -366,7 +374,7 @@ def generate_order_html(order):
             html += f"""
                 <tr>
                     <td>{item}</td>
-                    <td>{quantity}</td>
+                    <td>{format_quantity_with_unit(quantity, item)}</td>
                     <td>מוסתר בשלב זה</td>
                     <td>מוסתר בשלב זה</td>
                 </tr>
@@ -380,7 +388,7 @@ def generate_order_html(order):
         html += f"""
             <tr>
                 <td>{product}</td>
-                <td>{quantity}</td>
+                <td>{format_quantity_with_unit(quantity, product)}</td>
                 <td>מוסתר בשלב זה</td>
                 <td>מוסתר בשלב זה</td>
             </tr>
@@ -506,7 +514,7 @@ def show_order_details(order):
             total = price * quantity
             items_data.append({
                 'מוצר': item,
-                'כמות': quantity,
+                'כמות': format_quantity_with_unit(quantity, item),
                 # מחירים מוסתרים בשלב זה
             })
         
@@ -523,7 +531,7 @@ def show_order_details(order):
         with col1:
             st.write(f"**מוצר:** {product}")
         with col2:
-            st.write(f"**כמות:** {quantity}")
+            st.write(f"**כמות:** {format_quantity_with_unit(quantity, product)}")
         # מחירים מוסתרים בשלב זה
     
     # סיכום
@@ -574,12 +582,12 @@ def show_order_details(order):
                     isinstance(order['items'], dict)):
                     # הזמנת לקוח עם פריטים מרובים
                     for item, quantity in order['items'].items():
-                        message += f"• {item}: {quantity}\n"
+                        message += f"• {item}: {format_quantity_with_unit(quantity, item)}\n"
                 else:
                     # הזמנה רגילה עם מוצר אחד
                     product = order.get('product', 'מוצר לא ידוע')
                     quantity = order.get('quantity', 0)
-                    message += f"• {product}: {quantity}\n"
+                    message += f"• {product}: {format_quantity_with_unit(quantity, product)}\n"
                 
                 message += f"\nסטטוס: {get_status_hebrew(order['status'])}\n"
                 message += f"תאריך הזמנה: {order.get('created_at', '')}\n\n"
@@ -639,9 +647,9 @@ def main():
         st.rerun()
     
     # מידע על מונה ההזמנות
-    counter = load_order_counter()
+    next_order_id = get_next_order_id()
     st.sidebar.markdown("---")
-    st.sidebar.info(f"מספר הזמנה הבא: #{counter['next_order_id']}")
+    st.sidebar.info(f"מספר הזמנה הבא: #{next_order_id}")
     st.sidebar.info(f"הזמנות פעילות: {len(orders)}")
     st.sidebar.info(f"הזמנות סגורות: {len(closed_orders)}")
     
@@ -865,11 +873,11 @@ def show_active_orders_page(orders):
                                 order['items'] and 
                                 isinstance(order['items'], dict)):
                                 for item, quantity in order['items'].items():
-                                    message += f"• {item}: {quantity}\n"
+                                    message += f"• {item}: {format_quantity_with_unit(quantity, item)}\n"
                             else:
                                 product = order.get('product', 'מוצר לא ידוע')
                                 quantity = order.get('quantity', 0)
-                                message += f"• {product}: {quantity}\n"
+                                message += f"• {product}: {format_quantity_with_unit(quantity, product)}\n"
                             
                             message += f"\nסטטוס: {get_status_hebrew(order['status'])}\n"
                             message += "תודה! 🐓"
@@ -1077,11 +1085,11 @@ def show_closed_orders_page(closed_orders):
                                 order['items'] and 
                                 isinstance(order['items'], dict)):
                                 for item, quantity in order['items'].items():
-                                    message += f"• {item}: {quantity}\n"
+                                    message += f"• {item}: {format_quantity_with_unit(quantity, item)}\n"
                             else:
                                 product = order.get('product', 'מוצר לא ידוע')
                                 quantity = order.get('quantity', 0)
-                                message += f"• {product}: {quantity}\n"
+                                message += f"• {product}: {format_quantity_with_unit(quantity, product)}\n"
                             
                             message += f"\nסטטוס: {get_status_hebrew(order['status'])}\n"
                             message += "תודה! 🐓"
@@ -1191,7 +1199,7 @@ def show_closed_order_details(order):
             total = price * quantity
             items_data.append({
                 'מוצר': item,
-                'כמות': quantity,
+                'כמות': format_quantity_with_unit(quantity, item),
                 # מחירים מוסתרים בשלב זה
             })
         
@@ -1208,7 +1216,7 @@ def show_closed_order_details(order):
         with col1:
             st.write(f"**מוצר:** {product}")
         with col2:
-            st.write(f"**כמות:** {quantity}")
+            st.write(f"**כמות:** {format_quantity_with_unit(quantity, product)}")
         # מחירים מוסתרים בשלב זה
     
     # סיכום
@@ -1259,12 +1267,12 @@ def show_closed_order_details(order):
                     isinstance(order['items'], dict)):
                     # הזמנת לקוח עם פריטים מרובים
                     for item, quantity in order['items'].items():
-                        message += f"• {item}: {quantity}\n"
+                        message += f"• {item}: {format_quantity_with_unit(quantity, item)}\n"
                 else:
                     # הזמנה רגילה עם מוצר אחד
                     product = order.get('product', 'מוצר לא ידוע')
                     quantity = order.get('quantity', 0)
-                    message += f"• {product}: {quantity}\n"
+                    message += f"• {product}: {format_quantity_with_unit(quantity, product)}\n"
                 
                 message += f"\nסטטוס: {get_status_hebrew(order['status'])}\n"
                 message += f"תאריך הזמנה: {order.get('created_at', '')}\n"
@@ -1334,7 +1342,9 @@ def show_add_order_page(orders):
                 product = st.text_input("הקלד שם המוצר", key="product_custom")
         
         with col2:
-            quantity = st.number_input("כמות", min_value=1, value=1, key="quantity")
+            # קביעת יחידה לפי המוצר שנבחר
+            unit = get_product_unit(product) if 'product' in locals() else "יחידות"
+            quantity = st.number_input(f"כמות ({unit})", min_value=1, value=1, key="quantity")
             price = st.number_input("מחיר ליחידה (מושהה)", min_value=0.0, value=0.0, key="price", disabled=True)
         
         status = st.selectbox(
@@ -1440,7 +1450,8 @@ def show_edit_orders_page(orders):
                     with col1:
                         st.write(f"**{item}**")
                     with col2:
-                        new_qty = st.number_input(f"כמות", min_value=0, value=quantity, key=f"qty_{item}")
+                        unit = get_product_unit(item)
+                        new_qty = st.number_input(f"כמות ({unit})", min_value=0, value=quantity, key=f"qty_{item}")
                     with col3:
                         st.write("")  # רווח במקום כפתור
                     
@@ -1539,7 +1550,8 @@ def show_edit_orders_page(orders):
                         product = st.text_input("הקלד שם המוצר", value=selected_order['product'], key="edit_product_custom")
                 
                 with col2:
-                    quantity = st.number_input("כמות", min_value=1, value=selected_order['quantity'])
+                    unit = get_product_unit(selected_order['product'])
+                    quantity = st.number_input(f"כמות ({unit})", min_value=1, value=selected_order['quantity'])
                     price = st.number_input("מחיר ליחידה (מושהה)", min_value=0.0, value=selected_order['price'], disabled=True)
                 
                 status = st.selectbox(
@@ -1619,18 +1631,24 @@ def show_analytics_page(orders, closed_orders):
     # סיכום לפי קטגוריה
     st.subheader("סיכום כמויות לפי קטגוריה")
     cat_sum = df.groupby('category')['quantity'].sum().reset_index().sort_values('quantity', ascending=False)
+    # הוספת עמודת יחידות
+    cat_sum['יחידות'] = cat_sum['category'].apply(lambda x: "ק\"ג" if x in ["עופות", "בשר"] else "יחידות")
     st.dataframe(cat_sum)
     st.bar_chart(cat_sum.set_index('category'))
 
     # סיכום לפי פריט
     st.subheader("סיכום כמויות לפי פריט")
     prod_sum = df.groupby('product')['quantity'].sum().reset_index().sort_values('quantity', ascending=False)
+    # הוספת עמודת יחידות
+    prod_sum['יחידות'] = prod_sum['product'].apply(lambda x: get_product_unit(x))
     st.dataframe(prod_sum)
     st.bar_chart(prod_sum.set_index('product'))
 
     # סיכום לפי לקוח
     st.subheader("סיכום כמויות לפי לקוח")
     cust_sum = df.groupby(['customer', 'phone'])['quantity'].sum().reset_index().sort_values('quantity', ascending=False)
+    # הוספת עמודת יחידות (ברירת מחדל ליחידות)
+    cust_sum['יחידות'] = "יחידות"
     st.dataframe(cust_sum)
     st.bar_chart(cust_sum.set_index('customer'))
 
@@ -1642,6 +1660,8 @@ def show_analytics_page(orders, closed_orders):
     st.subheader("פילוח הזמנות לפי חודשים")
     df['month'] = df['date'].dt.to_period('M').astype(str)
     month_sum = df.groupby('month')['quantity'].sum().reset_index().sort_values('month')
+    # הוספת עמודת יחידות (ברירת מחדל ליחידות)
+    month_sum['יחידות'] = "יחידות"
     st.dataframe(month_sum)
     st.bar_chart(month_sum.set_index('month'))
 
@@ -1664,29 +1684,12 @@ def show_analytics_page(orders, closed_orders):
         return "לא חג"
     df['holiday'] = df['date'].apply(get_holiday_name)
     holiday_sum = df.groupby('holiday')['quantity'].sum().reset_index().sort_values('quantity', ascending=False)
+    # הוספת עמודת יחידות (ברירת מחדל ליחידות)
+    holiday_sum['יחידות'] = "יחידות"
     st.dataframe(holiday_sum)
     st.bar_chart(holiday_sum.set_index('holiday'))
 
-def load_customers():
-    """טוען את בסיס הנתונים של הלקוחות"""
-    if os.path.exists(CUSTOMERS_FILE):
-        with open(CUSTOMERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
-
-def save_customers(customers):
-    """שומר את בסיס הנתונים של הלקוחות"""
-    with open(CUSTOMERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(customers, f, ensure_ascii=False, indent=2)
-
-def cleanup_old_customers():
-    """מנקה לקוחות שלא הזמינו מעל 365 ימים"""
-    customers = load_customers()
-    cutoff_date = datetime.now() - timedelta(days=365)
-    customers = [c for c in customers if 
-                'last_order_date' in c and 
-                datetime.strptime(c['last_order_date'], '%Y-%m-%d %H:%M:%S') > cutoff_date]
-    save_customers(customers)
+# הפונקציות לניהול לקוחות מיובאות מ-database.py
 
 def show_customers_page():
     """מציג דף ניהול לקוחות"""
@@ -1803,7 +1806,7 @@ def show_enhanced_analytics_page(orders, closed_orders):
         for product, stats in sorted(product_stats.items(), key=lambda x: x[1]['total_quantity'], reverse=True):
             product_data.append({
                 'מוצר': product,
-                'כמות כוללת': stats['total_quantity'],
+                'כמות כוללת': f"{stats['total_quantity']} {get_product_unit(product)}",
                 'כמות הזמנות': stats['total_orders'],
                 'לקוחות ייחודיים': len(stats['customers'])
             })

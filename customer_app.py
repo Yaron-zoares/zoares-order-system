@@ -4,10 +4,16 @@ import json
 import os
 from datetime import datetime, timedelta
 import webbrowser
+from database import (
+    init_database, load_orders, save_order, load_closed_orders,
+    load_customers, save_customers, find_or_create_customer, 
+    update_customer_stats, cleanup_old_customers, import_existing_data
+)
 
-ORDERS_FILE = 'orders.json'
-CLOSED_ORDERS_FILE = 'closed_orders.json'
-CUSTOMERS_FILE = 'customers.json'  # בסיס נתונים משותף של לקוחות
+# אתחול מסד הנתונים וייבוא נתונים קיימים
+if not os.path.exists('zoares_central.db'):
+    init_database()
+    import_existing_data()
 
 PRODUCT_CATEGORIES = {
     "עופות": [
@@ -40,8 +46,6 @@ PRODUCT_CATEGORIES = {
         "בשר שריר",
         "אונטריב",
         "רגל פרה",
-        "בשר ראש (לחי)",
-
         "אצבעות אנטריקוט",
         "ריבס אנטריקוט",
         "אסאדו עם עצם מקוצב 4 צלעות",
@@ -113,8 +117,6 @@ WEIGHT_PRODUCTS = {
     "בשר שריר": True,
     "אונטריב": True,
     "רגל פרה": True,
-    "בשר ראש (לחי)": True,
-
     "אצבעות אנטריקוט": True,
     "ריבס אנטריקוט": True,
     "אסאדו עם עצם מקוצב 4 צלעות": True,
@@ -304,7 +306,6 @@ PRODUCT_PRICES = {
     "רגל פרה": 40.0,
     "עצמות": 25.0,
     "גידים": 45.0,
-    "בשר ראש (לחי)": 60.0,
     "סלמון": 80.0,
     "טונה": 70.0,
     "מושט": 65.0,
@@ -372,15 +373,8 @@ PRODUCT_PRICES = {
     "במיה כפתורים": 8.0
 }
 
-def load_orders():
-    if os.path.exists(ORDERS_FILE):
-        with open(ORDERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
-
-def save_order(order):
-    """שומר הזמנה עם קישור ללקוח"""
-    orders = load_orders()
+def calculate_order_total(order):
+    """מחשב את הסכום הכולל של ההזמנה"""
     order_total = 0.0
     for product, quantity in order['items'].items():
         # בדיקה שהפריט הוא מוצר ולא הוראות חיתוך
@@ -393,11 +387,25 @@ def save_order(order):
                 base_product = product.split(' - ')[0] if ' - ' in product else product
                 if base_product in PRODUCT_PRICES:
                     order_total += PRODUCT_PRICES[base_product] * quantity
-    if 'customer_id' in order:
-        update_customer_stats(order['customer_id'], order_total)
-    orders.append(order)
-    with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(orders, f, ensure_ascii=False, indent=2)
+    return order_total
+
+def save_order_with_customer(order):
+    """שומר הזמנה עם קישור ללקוח במסד הנתונים"""
+    # חישוב הסכום הכולל
+    order_total = calculate_order_total(order)
+    order['total_amount'] = order_total
+    
+    # יצירת או עדכון לקוח
+    customer_id = find_or_create_customer(order['phone'], order['customer_name'])
+    order['customer_id'] = customer_id
+    
+    # שמירת ההזמנה
+    order_id = save_order(order)
+    
+    # עדכון סטטיסטיקות לקוח
+    update_customer_stats(customer_id, order_total)
+    
+    return order_id
 
 # אסיר את כל הפונקציות והקריאות להדפסה בהמשך הקובץ (generate_order_html, print_order, וכל כפתור הדפסה)
 
@@ -510,61 +518,7 @@ def get_cutting_instructions(cart):
             instructions.append(f"{product}: {cutting_option}")
     return instructions
 
-def load_customers():
-    """טוען את בסיס הנתונים של הלקוחות"""
-    if os.path.exists(CUSTOMERS_FILE):
-        with open(CUSTOMERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
-
-def save_customers(customers):
-    """שומר את בסיס הנתונים של הלקוחות"""
-    with open(CUSTOMERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(customers, f, ensure_ascii=False, indent=2)
-
-def find_or_create_customer(phone, full_name):
-    """מוצא לקוח קיים או יוצר חדש"""
-    customers = load_customers()
-    for customer in customers:
-        if customer['phone'] == phone:
-            if customer['full_name'] != full_name:
-                customer['full_name'] = full_name
-                customer['last_updated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                save_customers(customers)
-            return customer['id']
-    
-    new_customer = {
-        'id': len(customers) + 1,
-        'phone': phone,
-        'full_name': full_name,
-        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'total_orders': 0,
-        'total_spent': 0.0
-    }
-    customers.append(new_customer)
-    save_customers(customers)
-    return new_customer['id']
-
-def update_customer_stats(customer_id, order_total):
-    """מעדכן סטטיסטיקות לקוח"""
-    customers = load_customers()
-    for customer in customers:
-        if customer['id'] == customer_id:
-            customer['total_orders'] += 1
-            customer['total_spent'] += order_total
-            customer['last_order_date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            save_customers(customers)
-            break
-
-def cleanup_old_customers():
-    """מנקה לקוחות שלא הזמינו מעל 365 ימים"""
-    customers = load_customers()
-    cutoff_date = datetime.now() - timedelta(days=365)
-    customers = [c for c in customers if 
-                'last_order_date' in c and 
-                datetime.strptime(c['last_order_date'], '%Y-%m-%d %H:%M:%S') > cutoff_date]
-    save_customers(customers)
+# הפונקציות לניהול לקוחות עכשיו מיובאות מ-database.py
 
 def main():
     # הוספת CSS ליישור לימין ולשיפור הממשק
@@ -1095,8 +1049,8 @@ def show_order_page(orders):
                         'status': 'pending',
                         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
-                    orders.append(new_order)
-                    save_order(new_order)
+                    # שמירת ההזמנה במסד הנתונים
+                    order_id = save_order_with_customer(new_order)
                     st.success("🎉 ההזמנה נשלחה בהצלחה!")
                     st.balloons()
                     # ניקוי העגלה אחרי הצגת הודעת ההצלחה

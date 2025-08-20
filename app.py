@@ -1344,7 +1344,10 @@ def show_add_order_page(orders):
         with col2:
             # קביעת יחידה לפי המוצר שנבחר
             unit = get_product_unit(product) if 'product' in locals() else "יחידות"
-            quantity = st.number_input(f"כמות ({unit})", min_value=1, value=1, key="quantity")
+            if unit == "ק\"ג":
+                quantity = st.number_input(f"כמות ({unit})", min_value=0.1, value=1.0, step=0.1, key="quantity")
+            else:
+                quantity = st.number_input(f"כמות ({unit})", min_value=1, value=1, step=1, key="quantity")
             price = st.number_input("מחיר ליחידה (מושהה)", min_value=0.0, value=0.0, key="price", disabled=True)
         
         status = st.selectbox(
@@ -1451,7 +1454,10 @@ def show_edit_orders_page(orders):
                         st.write(f"**{item}**")
                     with col2:
                         unit = get_product_unit(item)
-                        new_qty = st.number_input(f"כמות ({unit})", min_value=0, value=quantity, key=f"qty_{item}")
+                        if unit == "ק\"ג":
+                            new_qty = st.number_input(f"כמות ({unit})", min_value=0.0, value=float(quantity), step=0.1, key=f"qty_{item}")
+                        else:
+                            new_qty = st.number_input(f"כמות ({unit})", min_value=0, value=int(quantity), step=1, key=f"qty_{item}")
                     with col3:
                         st.write("")  # רווח במקום כפתור
                     
@@ -1551,8 +1557,11 @@ def show_edit_orders_page(orders):
                 
                 with col2:
                     unit = get_product_unit(selected_order['product'])
-                    quantity = st.number_input(f"כמות ({unit})", min_value=1, value=selected_order['quantity'])
-                    price = st.number_input("מחיר ליחידה (מושהה)", min_value=0.0, value=selected_order['price'], disabled=True)
+                    if unit == "ק\"ג":
+                        quantity = st.number_input(f"כמות ({unit})", min_value=0.1, value=float(selected_order['quantity']), step=0.1)
+                    else:
+                        quantity = st.number_input(f"כמות ({unit})", min_value=1, value=int(selected_order['quantity']), step=1)
+                    price = st.number_input("מחיר ליחידה (מושהה)", min_value=0.0, value=float(selected_order['price']), disabled=True)
                 
                 status = st.selectbox(
                     "סטטוס",

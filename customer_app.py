@@ -518,6 +518,77 @@ def get_cutting_instructions(cart):
             instructions.append(f"{product}: {cutting_option}")
     return instructions
 
+# פונקציה לחישוב מרחק Levenshtein (דמיון בין מילים)
+def levenshtein_distance(s1, s2):
+    """מחשבת את המרחק בין שתי מילים (כמה שינויים נדרשים להפוך אחת לשנייה)"""
+    if len(s1) < len(s2):
+        return levenshtein_distance(s2, s1)
+    
+    if len(s2) == 0:
+        return len(s1)
+    
+    previous_row = list(range(len(s2) + 1))
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    
+    return previous_row[-1]
+
+# פונקציה לחיפוש חכם עם תיקון שגיאות כתיב
+def smart_search(query, products_list, max_distance=3, min_similarity=0.6):
+    """מבצע חיפוש חכם עם תיקון שגיאות כתיב והצעת חלופות דומות"""
+    query = query.strip().lower()
+    results = []
+    suggestions = []
+    
+    # חיפוש מדויק
+    exact_matches = [prod for prod in products_list if query in prod.lower()]
+    results.extend([(prod, 1.0, "מדויק") for prod in exact_matches])
+    
+    # חיפוש עם שגיאות כתיב
+    for product in products_list:
+        product_lower = product.lower()
+        
+        # חישוב דמיון
+        distance = levenshtein_distance(query, product_lower)
+        max_len = max(len(query), len(product_lower))
+        similarity = 1 - (distance / max_len) if max_len > 0 else 0
+        
+        # אם הדמיון גבוה מספיק
+        if similarity >= min_similarity and distance <= max_distance:
+            if product not in [r[0] for r in results]:  # לא להוסיף כפילות
+                if similarity >= 0.8:
+                    match_type = "דומה מאוד"
+                elif similarity >= 0.7:
+                    match_type = "דומה"
+                else:
+                    match_type = "דומה חלקית"
+                
+                results.append((product, similarity, match_type))
+    
+    # מיון לפי דמיון (גבוה יותר קודם)
+    results.sort(key=lambda x: x[1], reverse=True)
+    
+    # יצירת הצעות לתיקון שגיאות כתיב
+    if not exact_matches and results:
+        # מציאת המוצר הדומה ביותר
+        best_match = results[0]
+        if best_match[1] >= 0.7:  # אם הדמיון גבוה מספיק
+            suggestions.append(f"האם התכוונת ל: '{best_match[0]}'?")
+        
+        # הצעות נוספות אם יש
+        if len(results) > 1:
+            other_suggestions = [r[0] for r in results[1:4] if r[1] >= 0.6]
+            if other_suggestions:
+                suggestions.append(f"מוצרים דומים: {', '.join(other_suggestions)}")
+    
+    return results, suggestions
+
 # הפונקציות לניהול לקוחות עכשיו מיובאות מ-database.py
 
 def main():
@@ -709,6 +780,161 @@ def main():
     st.sidebar.write("• בני ברק: 20 ש\"ח")
     st.sidebar.write("• מחוץ לבני ברק: 25 ש\"ח")
     
+    # --- חיפוש מוצר בסיידבר ---
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🔎 חיפוש מוצר")
+    # איפוס שדה החיפוש בסיידבר לפני יצירת הווידג'ט אם התבקש
+    if st.session_state.get("sb_clear_requested", False):
+        st.session_state["sb_clear_requested"] = False
+        st.session_state["sidebar_product_search"] = ""
+    sidebar_search_query = st.sidebar.text_input(
+        "הקלד שם מוצר:",
+        placeholder="לדוגמה: שניצל עוף, המבורגר הבית, טחון עגל",
+        key="sidebar_product_search"
+    )
+    st.sidebar.caption("לתשומת לבך: יש ללחוץ על כפתור \"חפש\" – מקש Enter לא מפעיל את החיפוש.")
+    
+    # חיפוש ידני בלבד בסיידבר (הוסר חיפוש אוטומטי)
+    
+    sb_col1, sb_col2 = st.sidebar.columns([1, 1])
+    with sb_col1:
+        sb_do_search = st.sidebar.button("🔎 חפש", key="btn_sb_search_product")
+    with sb_col2:
+        sb_clear = st.sidebar.button("❌ נקה", key="btn_sb_clear_product_search")
+
+    if sb_clear:
+        st.session_state["sb_clear_requested"] = True
+        st.rerun()
+
+    sb_results = []
+    sb_suggestions = []
+    # חיפוש ידני בלבד בסיידבר
+    sb_should_search = (sb_do_search and sidebar_search_query)
+    if sb_should_search:
+        # יצירת רשימה של כל המוצרים
+        all_products = []
+        for category_name, products_in_cat in PRODUCT_CATEGORIES.items():
+            for prod in products_in_cat:
+                all_products.append((prod, category_name))
+        
+        # חיפוש חכם עם תיקון שגיאות כתיב
+        product_names = [prod for prod, _ in all_products]
+        smart_results, sb_suggestions = smart_search(sidebar_search_query, product_names)
+        
+        # מיפוי התוצאות חזרה לקטגוריות
+        for product, similarity, match_type in smart_results:
+            category_name = next(cat for prod, cat in all_products if prod == product)
+            sb_results.append((product, category_name, similarity, match_type))
+
+    if sb_do_search:
+        # הצגת הצעות בסיידבר
+        if sb_suggestions:
+            for suggestion in sb_suggestions[:2]:  # רק 2 הצעות בסיידבר
+                st.sidebar.info(suggestion)
+            st.sidebar.markdown("---")
+        
+        if sb_results:
+            st.sidebar.markdown(f"נמצאו {len(sb_results)} תוצאות")
+            for (product, category_name, similarity, match_type) in sb_results[:10]:
+                # הצגת סוג ההתאמה
+                if match_type == "מדויק":
+                    st.sidebar.success(f"✅ {product}")
+                elif match_type == "דומה מאוד":
+                    st.sidebar.info(f"🔍 {product}")
+                elif match_type == "דומה":
+                    st.sidebar.warning(f"🔍 {product}")
+                else:
+                    st.sidebar.write(f"🔍 {product}")
+                
+                # הצגת אחוז הדמיון
+                similarity_percent = int(similarity * 100)
+                st.sidebar.caption(f"דמיון: {similarity_percent}%")
+                
+                is_weight_product = product in WEIGHT_PRODUCTS
+                is_unit_product = product in UNIT_PRODUCTS
+
+                if is_weight_product:
+                    st.sidebar.caption("⚖️ בקילו")
+                    min_weight = 1.6 if product in ["עוף שלם", "עוף בלי עור"] else 0.5
+                    selected_weight = st.sidebar.number_input(
+                        "בחר משקל (קילו):",
+                        min_value=float(min_weight),
+                        value=float(min_weight),
+                        step=0.1,
+                        key=f"sb_weight_{product}_{category_name}"
+                    )
+                    if product in CUTTABLE_PRODUCTS:
+                        cutting_options = CUTTABLE_PRODUCTS[product]["options"]
+                        default_index = cutting_options.index(CUTTABLE_PRODUCTS[product]["default"])
+                        cutting_choice = st.sidebar.selectbox(
+                            "חיתוך:",
+                            cutting_options,
+                            index=default_index,
+                            key=f"sb_cutting_{product}_{category_name}"
+                        )
+                        st.session_state[f"cutting_{product}"] = cutting_choice
+                    if st.sidebar.button(f"הוסף - {product}", key=f"sb_add_{product}_{category_name}"):
+                        if selected_weight > 0:
+                            is_valid_weight, error_message = check_minimum_weight(product, selected_weight)
+                            if not is_valid_weight:
+                                st.sidebar.error(error_message)
+                            else:
+                                st.session_state.cart[product] = st.session_state.cart.get(product, 0) + selected_weight
+                                st.rerun()
+
+                elif is_unit_product:
+                    st.sidebar.caption("📦 ביחידות")
+                    if product == "עוף שלם":
+                        st.sidebar.info("⚠️ משקל מינימום ליחידה: 1.6 קג")
+                        min_units = 1
+                    elif product in ["המבורגר הבית", "המבורגר 160 גרם", "המבורגר 220 גרם"]:
+                        st.sidebar.info("⚠️ מינימום הזמנה: 5 יחידות")
+                        min_units = 5
+                    else:
+                        min_units = 1
+                    selected_units = st.sidebar.number_input(
+                        "בחר כמות:",
+                        min_value=int(min_units),
+                        value=int(min_units),
+                        step=1,
+                        key=f"sb_units_{product}_{category_name}"
+                    )
+                    if product in CUTTABLE_PRODUCTS:
+                        cutting_options = CUTTABLE_PRODUCTS[product]["options"]
+                        default_index = cutting_options.index(CUTTABLE_PRODUCTS[product]["default"])
+                        cutting_choice = st.sidebar.selectbox(
+                            "חיתוך:",
+                            cutting_options,
+                            index=default_index,
+                            key=f"sb_cutting_units_{product}_{category_name}"
+                        )
+                        st.session_state[f"cutting_{product}"] = cutting_choice
+                    if st.sidebar.button(f"הוסף - {product}", key=f"sb_add_units_{product}_{category_name}"):
+                        product_name = product
+                        if product in CUTTABLE_PRODUCTS:
+                            cutting_choice = st.session_state.get(f"cutting_{product}", CUTTABLE_PRODUCTS[product]["default"])
+                            product_name = f"{product} - {cutting_choice}"
+                        st.session_state.cart[product_name] = st.session_state.cart.get(product_name, 0) + selected_units
+                        st.rerun()
+
+                else:
+                    quantity = st.sidebar.number_input(
+                        "כמות:",
+                        min_value=1,
+                        value=1,
+                        step=1,
+                        key=f"sb_qty_{product}_{category_name}"
+                    )
+                    if st.sidebar.button(f"הוסף - {product}", key=f"sb_add_qty_{product}_{category_name}"):
+                        st.session_state.cart[product] = st.session_state.cart.get(product, 0) + quantity
+                        st.rerun()
+
+            if len(sb_results) > 10:
+                st.sidebar.info(f"הצגת 10 מתוך {len(sb_results)} תוצאות. צמצם את החיפוש לקבלת עוד.")
+        else:
+            st.sidebar.info("לא נמצאו מוצרים תואמים.")
+    # --- סוף חיפוש מוצר בסיידבר ---
+
     page = st.sidebar.selectbox(
         "בחר עמוד:",
         ["דף הבית", "הזמנת מוצרים", "מעקב הזמנות"]
@@ -784,6 +1010,176 @@ def show_order_page(orders):
     if 'cart' not in st.session_state:
         st.session_state.cart = {}
     
+    # --- חיפוש מוצר (בגוף העמוד) ---
+    st.subheader("🔎 חיפוש מוצר")
+    
+    # סינון לפי קטגוריה
+    search_category_filter = st.selectbox(
+        "קטגוריה לחיפוש:",
+        ["כל הקטגוריות"] + list(PRODUCT_CATEGORIES.keys()),
+        key="search_category_filter"
+    )
+    
+    search_query = st.text_input(
+        "הקלד שם מוצר:",
+        placeholder="לדוגמה: שניצל עוף, המבורגר הבית, טחון עגל",
+        key="product_search_main"
+    )
+    
+    # חיפוש ידני בלבד (הוסר חיפוש אוטומטי)
+    
+    scol1, scol2 = st.columns([1, 1])
+    with scol1:
+        do_search = st.button("🔎 חפש מוצר", key="btn_search_product_main")
+    with scol2:
+        clear_search = st.button("❌ נקה חיפוש", key="btn_clear_product_search_main")
+
+    if clear_search:
+        st.session_state["product_search_main"] = ""
+        st.rerun()
+
+    results = []
+    suggestions = []
+    # חיפוש ידני בלבד
+    should_search = (do_search and search_query)
+    if should_search:
+        # יצירת רשימה של מוצרים לפי הסינון
+        all_products = []
+        if search_category_filter == "כל הקטגוריות":
+            for category_name, products_in_cat in PRODUCT_CATEGORIES.items():
+                for prod in products_in_cat:
+                    all_products.append((prod, category_name))
+        else:
+            # חיפוש רק בקטגוריה שנבחרה
+            products_in_cat = PRODUCT_CATEGORIES[search_category_filter]
+            for prod in products_in_cat:
+                all_products.append((prod, search_category_filter))
+        
+        # חיפוש חכם עם תיקון שגיאות כתיב
+        product_names = [prod for prod, _ in all_products]
+        smart_results, suggestions = smart_search(search_query, product_names)
+        
+        # מיפוי התוצאות חזרה לקטגוריות
+        for product, similarity, match_type in smart_results:
+            category_name = next(cat for prod, cat in all_products if prod == product)
+            results.append((product, category_name, similarity, match_type))
+
+    if do_search:
+        st.markdown("---")
+        
+        # הצגת הצעות לתיקון שגיאות כתיב
+        if suggestions:
+            st.subheader("💡 הצעות חיפוש")
+            for suggestion in suggestions:
+                st.info(suggestion)
+            st.markdown("---")
+        
+        if results:
+            st.subheader(f"תוצאות חיפוש ({len(results)})")
+            cols = st.columns(3)
+            for i, (product, category_name, similarity, match_type) in enumerate(results):
+                with cols[i % 3]:
+                    # הצגת סוג ההתאמה
+                    if match_type == "מדויק":
+                        st.success(f"✅ {product}")
+                    elif match_type == "דומה מאוד":
+                        st.info(f"🔍 {product}")
+                    elif match_type == "דומה":
+                        st.warning(f"🔍 {product}")
+                    else:
+                        st.write(f"🔍 {product}")
+                    
+                    # הצגת אחוז הדמיון
+                    similarity_percent = int(similarity * 100)
+                    st.caption(f"דמיון: {similarity_percent}% ({match_type})")
+                    
+                    is_weight_product = product in WEIGHT_PRODUCTS
+                    is_unit_product = product in UNIT_PRODUCTS
+
+                    if is_weight_product:
+                        st.write("⚖️ נמכר בקילו")
+                        min_weight = 1.6 if product in ["עוף שלם", "עוף בלי עור"] else 0.5
+                        selected_weight = st.number_input(
+                            "בחר משקל (קילו):",
+                            min_value=float(min_weight),
+                            value=float(min_weight),
+                            step=0.1,
+                            key=f"search_weight_{product}_{category_name}"
+                        )
+                        if product in CUTTABLE_PRODUCTS:
+                            st.write("🔪 אופן חיתוך:")
+                            cutting_options = CUTTABLE_PRODUCTS[product]["options"]
+                            default_index = cutting_options.index(CUTTABLE_PRODUCTS[product]["default"])
+                            cutting_choice = st.selectbox(
+                                "בחר אופן חיתוך:",
+                                cutting_options,
+                                index=default_index,
+                                key=f"search_cutting_{product}_{category_name}"
+                            )
+                            st.session_state[f"cutting_{product}"] = cutting_choice
+                        if st.button(f"הוסף לעגלה - {product}", key=f"search_add_{product}_{category_name}"):
+                            if selected_weight > 0:
+                                is_valid_weight, error_message = check_minimum_weight(product, selected_weight)
+                                if not is_valid_weight:
+                                    st.error(error_message)
+                                else:
+                                    st.session_state.cart[product] = st.session_state.cart.get(product, 0) + selected_weight
+                                    st.success(f"{product} ({selected_weight} קג) נוסף לעגלה!")
+                                    st.rerun()
+
+                    elif is_unit_product:
+                        st.write("📦 נמכר ביחידות")
+                        if product == "עוף שלם":
+                            st.info("⚠️ משקל מינימום ליחידה: 1.6 קג")
+                            min_units = 1
+                        elif product in ["המבורגר הבית", "המבורגר 160 גרם", "המבורגר 220 גרם"]:
+                            st.info("⚠️ מינימום הזמנה: 5 יחידות")
+                            min_units = 5
+                        else:
+                            min_units = 1
+                        selected_units = st.number_input(
+                            "בחר כמות:",
+                            min_value=int(min_units),
+                            value=int(min_units),
+                            step=1,
+                            key=f"search_units_{product}_{category_name}"
+                        )
+                        if product in CUTTABLE_PRODUCTS:
+                            st.write("🔪 אופן חיתוך:")
+                            cutting_options = CUTTABLE_PRODUCTS[product]["options"]
+                            default_index = cutting_options.index(CUTTABLE_PRODUCTS[product]["default"])
+                            cutting_choice = st.selectbox(
+                                "בחר אופן חיתוך:",
+                                cutting_options,
+                                index=default_index,
+                                key=f"search_cutting_units_{product}_{category_name}"
+                            )
+                            st.session_state[f"cutting_{product}"] = cutting_choice
+                        if st.button(f"הוסף לעגלה - {product}", key=f"search_add_units_{product}_{category_name}"):
+                            product_name = product
+                            if product in CUTTABLE_PRODUCTS:
+                                cutting_choice = st.session_state.get(f"cutting_{product}", CUTTABLE_PRODUCTS[product]["default"])
+                                product_name = f"{product} - {cutting_choice}"
+                            st.session_state.cart[product_name] = st.session_state.cart.get(product_name, 0) + selected_units
+                            st.success(f"{product_name} ({selected_units} יחידות) נוסף לעגלה!")
+                            st.rerun()
+
+                    else:
+                        quantity = st.number_input(
+                            "כמות:",
+                            min_value=1,
+                            value=1,
+                            step=1,
+                            key=f"search_qty_{product}_{category_name}"
+                        )
+                        if st.button(f"הוסף לעגלה - {product}", key=f"search_add_qty_{product}_{category_name}"):
+                            st.session_state.cart[product] = st.session_state.cart.get(product, 0) + quantity
+                            st.success(f"{product} ({quantity} יחידות) נוסף לעגלה!")
+                            st.rerun()
+        else:
+            st.info("לא נמצאו מוצרים תואמים לחיפוש.")
+    # --- סוף חיפוש מוצר (בגוף העמוד) ---
+    
     # בחירת קטגוריה
     st.subheader("📂 בחר קטגוריה")
     category = st.selectbox("קטגוריה:", list(PRODUCT_CATEGORIES.keys()))
@@ -816,8 +1212,8 @@ def show_order_page(orders):
                 
                 selected_weight = st.number_input(
                     "בחר משקל (קילו):",
-                    min_value=min_weight,
-                    value=min_weight,
+                    min_value=float(min_weight),
+                    value=float(min_weight),
                     step=0.1,
                     key=f"weight_{product}_{category}"
                 )
@@ -864,8 +1260,8 @@ def show_order_page(orders):
                 
                 selected_units = st.number_input(
                     "בחר כמות:",
-                    min_value=min_units,
-                    value=min_units,
+                    min_value=int(min_units),
+                    value=int(min_units),
                     step=1,
                     key=f"units_{product}_{category}"
                 )
@@ -905,6 +1301,7 @@ def show_order_page(orders):
                     "כמות:",
                     min_value=1,
                     value=1,
+                    step=1,
                     key=f"qty_{product}_{category}"
                 )
                 

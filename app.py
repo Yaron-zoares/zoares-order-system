@@ -629,6 +629,15 @@ def main():
     st.title("🐓 מערכת ניהול הזמנות")
     st.markdown("---")
     
+    # רענון אוטומטי כל 30 שניות
+    if 'last_refresh' not in st.session_state:
+        st.session_state.last_refresh = datetime.now()
+    
+    # בדיקה אם עברו 30 שניות
+    if (datetime.now() - st.session_state.last_refresh).seconds > 30:
+        st.session_state.last_refresh = datetime.now()
+        st.rerun()
+    
     # ניקוי אוטומטי של הזמנות ישנות
     if 'cleanup_done' not in st.session_state:
         active_removed, closed_removed = cleanup_old_orders()
@@ -645,6 +654,11 @@ def main():
     
     # סיידבר לניווט
     st.sidebar.title("ניווט")
+    
+    # כפתור רענן אוטומטי
+    if st.sidebar.button("🔄 רענן נתונים", type="primary"):
+        st.rerun()
+    
     page = st.sidebar.selectbox(
         "בחר עמוד:",
         ["הזמנות פעילות", "הזמנות סגורות", "הוספת הזמנה", "עריכת הזמנות", "ניתוח נתונים", "ניהול לקוחות", "ניתוח מתקדם"]
@@ -685,6 +699,13 @@ def main():
 def show_active_orders_page(orders):
     """מציג את דף ההזמנות הפעילות"""
     st.header("📋 הזמנות פעילות")
+    
+    # כפתור רענון בולט
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔄 רענן נתונים עכשיו", type="primary", use_container_width=True):
+            st.rerun()
+    
     st.info(f"הזמנות לא סופקות נשמרות עד {ACTIVE_ORDER_RETENTION_DAYS} ימי עסקים")
     st.markdown("""
     **הקטגוריות שלנו:**
@@ -712,7 +733,7 @@ def show_active_orders_page(orders):
     
     st.markdown("---")
     
-    # כפתור רענון
+    # כפתור רענון נוסף
     col1, col2 = st.columns([1, 4])
     with col1:
         if st.button("🔄 רענן נתונים"):
@@ -940,6 +961,13 @@ def show_active_orders_page(orders):
 def show_closed_orders_page(closed_orders):
     """מציג את דף ההזמנות הסגורות"""
     st.header("📋 הזמנות סגורות")
+    
+    # כפתור רענן
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("🔄 רענן הזמנות סגורות", type="secondary"):
+            st.rerun()
+    
     st.info(f"הזמנות סגורות נשמרות עד {CLOSED_ORDER_RETENTION_DAYS} ימי עסקים")
     
     if not closed_orders:
@@ -1311,6 +1339,12 @@ def show_add_order_page(orders):
     """מציג את דף הוספת הזמנה חדשה"""
     st.header("➕ הוספת הזמנה חדשה")
     
+    # כפתור רענן
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("🔄 רענן הזמנות", type="secondary"):
+            st.rerun()
+    
     with st.form("add_order_form"):
         col1, col2 = st.columns(2)
         
@@ -1403,6 +1437,12 @@ def show_add_order_page(orders):
 def show_edit_orders_page(orders):
     """מציג את דף עריכת הזמנות"""
     st.header("✏️ עריכת הזמנות")
+    
+    # כפתור רענן
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("🔄 רענן הזמנות", type="secondary"):
+            st.rerun()
     
     if not orders:
         st.info("אין הזמנות לעריכה")
@@ -1639,6 +1679,12 @@ def show_analytics_page(orders, closed_orders):
     import matplotlib.pyplot as plt
 
     st.header("📊 ניתוח סטטיסטי של הזמנות")
+    
+    # כפתור רענן
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("🔄 רענן נתונים", type="secondary"):
+            st.rerun()
 
     # איסוף כל ההזמנות (פעילות וסגורות)
     all_orders = (orders or []) + (closed_orders or [])
@@ -1734,6 +1780,12 @@ def show_customers_page():
     """מציג דף ניהול לקוחות"""
     st.header("👥 ניהול לקוחות")
     
+    # כפתור רענן
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("🔄 רענן לקוחות", type="secondary"):
+            st.rerun()
+    
     customers = load_customers()
     
     if not customers:
@@ -1783,6 +1835,12 @@ def show_customers_page():
 def show_enhanced_analytics_page(orders, closed_orders):
     """מציג דף ניתוח מתקדם עם נתוני לקוחות"""
     st.header("📊 ניתוח מתקדם")
+    
+    # כפתור רענן
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("🔄 רענן נתונים", type="secondary"):
+            st.rerun()
     
     customers = load_customers()
     all_orders = (orders or []) + (closed_orders or [])

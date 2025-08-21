@@ -145,6 +145,28 @@ update_customer_stats(customer_id, order_total)
 
 ## 🔍 פתרון בעיות
 
+### שגיאות נפוצות ופתרונות:
+
+#### 1. NameError: name 'save_orders' is not defined
+- **בעיה**: הפונקציה `save_orders` לא קיימת במערכת החדשה
+- **פתרון**: המערכת משתמשת בפונקציות מסד הנתונים (`save_order`, `update_order`, `delete_order`)
+- **מיקום**: `app.py` - כל הקריאות ל-`save_orders` הוחלפו
+
+#### 2. TypeError: unsupported operand type(s) for *: 'float' and 'dict'
+- **בעיה**: ניסיון להכפיל מחיר (float) בכמות (dict) בעריכת הזמנות
+- **פתרון**: המערכת מטפלת נכון במבנה `items` עם `quantity` ו-`price`
+- **מיקום**: `app.py` - `show_order_details` ו-`print_order`
+
+#### 3. TypeError: unsupported operand type(s) for +=: 'int' and 'dict'
+- **בעיה**: ניסיון לחבר מספר (int) עם dict בניתוח נתונים
+- **פתרון**: המרת כמויות למספרים לפני חישובים אנליטיים
+- **מיקום**: `app.py` - `show_analytics_page` ו-`show_enhanced_analytics_page`
+
+#### 4. sqlite3.IntegrityError: UNIQUE constraint failed
+- **בעיה**: ניסיון להכניס הזמנה עם ID קיים לטבלת `closed_orders`
+- **פתרון**: שימוש ב-`INSERT OR REPLACE INTO` במקום `INSERT INTO`
+- **מיקום**: `database.py` - `move_order_to_closed`
+
 ### שגיאה: "database is locked"
 - סגור את כל האפליקציות
 - מחק את הקובץ `zoares_central.db-journal`
@@ -158,6 +180,27 @@ update_customer_stats(customer_id, order_total)
 - בדוק שקובץ `zoares_central.db` קיים
 - הפעל `import_existing_data()` ידנית
 
+## 🔧 שיפורים טכניים אחרונים
+
+### תיקון שגיאות עריכה (דצמבר 2024):
+- **החלפת `save_orders`**: כל הקריאות הוחלפו בפונקציות מסד הנתונים המתאימות
+- **טיפול במבנה פריטים**: תמיכה נכונה ב-`items` עם `quantity` ו-`price`
+- **תיקון חישובים אנליטיים**: המרת כמויות למספרים לפני חישובים
+- **שיפור סגירת הזמנות**: שימוש ב-`INSERT OR REPLACE` למניעת שגיאות UNIQUE
+
+### פונקציות חדשות:
+```python
+# פונקציות עריכה משופרות
+update_order(order_id, order_data)      # עדכון הזמנה קיימת
+move_order_to_closed(order_data)        # העברה להזמנות סגורות עם טיפול בשגיאות
+delete_order(order_id)                  # מחיקת הזמנה עם ניקוי נתונים
+```
+
+### מבנה נתונים משופר:
+- **טיפול ב-`items`**: תמיכה במבנה מורכב עם `quantity`, `price`, ו-`unit`
+- **ניקוי אוטומטי**: מניעת שגיאות נתונים ומבנה
+- **סנכרון מלא**: עדכון מיידי של כל השינויים
+
 ## 📞 תמיכה
 
 לכל שאלה או בעיה:
@@ -168,3 +211,19 @@ update_customer_stats(customer_id, order_total)
 ---
 
 **הערה**: המעבר למסד נתונים מרכזי מבטיח סנכרון מלא בין כל המחשבים במערכת!
+
+## 📋 היסטוריית עדכונים
+
+### דצמבר 2024 - תיקון שגיאות עריכה
+- תיקון NameError: name 'save_orders' is not defined
+- תיקון TypeError בעריכת פריטי הזמנה
+- תיקון TypeError בניתוח נתונים
+- תיקון IntegrityError בסגירת הזמנות
+- שיפור ניהול הזמנות עם מסד הנתונים
+
+### אוגוסט 2025 - מעבר למסד נתונים מרכזי
+- מעבר מקבצי JSON ל-SQLite
+- יצירת מסד נתונים מרכזי
+- ייבוא נתונים קיימים
+- ניהול לקוחות מתקדם
+- ניתוח נתונים משופר

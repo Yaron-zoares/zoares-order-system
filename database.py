@@ -197,25 +197,58 @@ def move_order_to_closed(order: Dict[str, Any]):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
-        INSERT INTO closed_orders (id, customer_name, phone, address, delivery_notes,
-                                  butcher_notes, items, status, created_at, closed_at, 
-                                  total_amount, customer_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        order['id'],
-        order['customer_name'],
-        order['phone'],
-        json.dumps(order.get('address', {})),
-        order.get('delivery_notes', ''),
-        order.get('butcher_notes', ''),
-        json.dumps(order['items']),
-        order.get('status', 'completed'),
-        order['created_at'],
-        datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        order.get('total_amount', 0.0),
-        order.get('customer_id')
-    ))
+    # אם ההזמנה כבר קיימת ב-closed_orders נעדכן, אחרת נכניס חדשה
+    cursor.execute('SELECT id FROM closed_orders WHERE id = ?', (order['id'],))
+    exists = cursor.fetchone()
+    if exists:
+        cursor.execute('''
+            UPDATE closed_orders
+            SET customer_name = ?,
+                phone = ?,
+                address = ?,
+                delivery_notes = ?,
+                butcher_notes = ?,
+                items = ?,
+                status = ?,
+                created_at = ?,
+                closed_at = ?,
+                total_amount = ?,
+                customer_id = ?
+            WHERE id = ?
+        ''', (
+            order['customer_name'],
+            order['phone'],
+            json.dumps(order.get('address', {})),
+            order.get('delivery_notes', ''),
+            order.get('butcher_notes', ''),
+            json.dumps(order['items']),
+            order.get('status', 'completed'),
+            order['created_at'],
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            order.get('total_amount', 0.0),
+            order.get('customer_id'),
+            order['id']
+        ))
+    else:
+        cursor.execute('''
+            INSERT INTO closed_orders (id, customer_name, phone, address, delivery_notes,
+                                      butcher_notes, items, status, created_at, closed_at, 
+                                      total_amount, customer_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            order['id'],
+            order['customer_name'],
+            order['phone'],
+            json.dumps(order.get('address', {})),
+            order.get('delivery_notes', ''),
+            order.get('butcher_notes', ''),
+            json.dumps(order['items']),
+            order.get('status', 'completed'),
+            order['created_at'],
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            order.get('total_amount', 0.0),
+            order.get('customer_id')
+        ))
     
     # מחיקת ההזמנה מהזמנות פעילות
     cursor.execute('DELETE FROM orders WHERE id = ?', (order['id'],))

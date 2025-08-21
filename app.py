@@ -42,39 +42,44 @@ PRODUCT_CATEGORIES = {
         "חזה עוף",
         "שניצל עוף",
         "כנפיים",
-        "כרעיים",
         "כרעיים עוף",
         "ירכיים",
-        "ירכיים עוף",
-        "עוף עם עור",
-        "עוף בלי עור",
+        "שוקיים עוף",
+        "קורקבן עוף",
+        "טחול עוף",
         "כבד עוף",
         "לב עוף",
         "עוף טחון",
-        "נקניקיות עוף",
-        "שווארמה עוף (פרגיות)",
-        "שווארמה הודו",
-        "הודו שלם",
-        "חזה הודו",
-        "קורקבן הודו",
-        "כנפיים הודו",
-        "שוקיים הודו",
-        "ביצי הודו"
+        "טחון מיוחד (שווארמה נקבה, פרגית וחזה עוף)",
+        "שווארמה עוף (פרגיות)"
     ],
     "בשר": [
         "בשר בקר טחון",
-        "סטייק אנטריקוט",
         "צלעות בקר",
         "בשר כבש",
-        "המבורגר בקר",
-        "בשר טחון מעורב",
-        "בשר עגל",
+        "המבורגר הבית",
+        "טחון קוקטייל הבית",
         "בשר עגל טחון",
         "בשר עגל טחון עם שומן כבש",
+        "פילה מדומה",
+        "פילה פרמיום",
+        "צלעות",
+        "בשר שריר",
+        "אונטריב",
         "רגל פרה",
-        "עצמות",
-        "גידים",
-        "בשר ראש (לחי)"
+        "אצבעות אנטריקוט",
+        "ריבס אנטריקוט",
+        "אסאדו עם עצם מקוצב 4 צלעות",
+        "צלי כתף",
+        "בננות שריר",
+        "אנטריקוט פיידלוט פרימיום",
+        "כבד אווז",
+        "שקדי עגל גרון /לב",
+        "עצמות מח",
+        "גידי רגל",
+        "כתף כבש",
+        "צלעות טלה פרימיום בייבי",
+        "שומן גב כבש טרי  בדצ בית יוסף"
     ],
     "דגים": [
         "סלמון",
@@ -82,10 +87,27 @@ PRODUCT_CATEGORIES = {
         "מושט",
         "אחר"
     ],
+    "הודו": [
+        "הודו שלם נקבה",
+        "חזה הודו נקבה",
+        "שווארמה הודו נקבה",
+        "קורקבן הודו נקבה",
+        "כנפיים הודו נקבה",
+        "שוקיים הודו נקבה",
+        "לבבות הודו נקבה",
+        "גרון הודו",
+        "ביצי הודו"
+    ],
+    "המבורגר הבית": [
+        "המבורגר 160 גרם",
+        "המבורגר 220 גרם"
+    ],
     "אחר": [
         "נקניקיות עוף",
         "נקניקיות חריפות (מרגז)",
-        "צ'יפס"
+        "צ׳יפס מארז 2.5 קג תפוגן",
+        "צ׳נגו מוסדי 1.25 קג מארז",
+        "במיה כפתורים"
     ]
 }
 
@@ -129,7 +151,6 @@ WEIGHT_PRODUCTS = {
 UNIT_PRODUCTS = {
     "עוף שלם": True,
     "נקניקיות עוף": True,
-    "המבורגר עוף": True,
     "שווארמה עוף (פרגיות)": True,
     "הודו שלם נקבה": True,
     "חזה הודו נקבה": True,
@@ -200,7 +221,6 @@ PRODUCT_PRICES = {
     "לב עוף": 25.0,
     "עוף טחון": 30.0,
     "נקניקיות עוף": 10.0,
-    "המבורגר עוף": 20.0,
     "שווארמה עוף (פרגיות)": 15.0,
     "שווארמה הודו": 25.0,
     "הודו שלם": 45.0,
@@ -368,9 +388,8 @@ def generate_order_html(order):
         order['items'] and 
         isinstance(order['items'], dict)):
         # הזמנת לקוח עם פריטים מרובים
-        for item, quantity in order['items'].items():
-            price = PRODUCT_PRICES.get(item, 0)
-            total = price * quantity
+        for item, details in order['items'].items():
+            quantity = details.get('quantity', details) if isinstance(details, dict) else details
             html += f"""
                 <tr>
                     <td>{item}</td>
@@ -383,8 +402,6 @@ def generate_order_html(order):
         # הזמנה רגילה עם מוצר אחד
         product = order.get('product', 'מוצר לא ידוע')
         quantity = order.get('quantity', 0)
-        price = order.get('price', 0)
-        total = price * quantity
         html += f"""
             <tr>
                 <td>{product}</td>
@@ -401,7 +418,7 @@ def generate_order_html(order):
     """
     
     # חישוב סה"כ
-    delivery_cost = 20.0
+    delivery_cost = 0.0
     html += f"""
         <div class="total">
             <p><strong>עלות משלוח:</strong> מוסתר בשלב זה</p>
@@ -509,9 +526,8 @@ def show_order_details(order):
         isinstance(order['items'], dict)):
         # הזמנת לקוח עם פריטים מרובים
         items_data = []
-        for item, quantity in order['items'].items():
-            price = PRODUCT_PRICES.get(item, 0)
-            total = price * quantity
+        for item, details in order['items'].items():
+            quantity = details.get('quantity', details) if isinstance(details, dict) else details
             items_data.append({
                 'מוצר': item,
                 'כמות': format_quantity_with_unit(quantity, item),
@@ -524,8 +540,6 @@ def show_order_details(order):
         # הזמנה רגילה עם מוצר אחד
         product = order.get('product', 'מוצר לא ידוע')
         quantity = order.get('quantity', 0)
-        price = order.get('price', 0)
-        total = price * quantity
         
         col1, col2 = st.columns(2)
         with col1:
@@ -895,8 +909,7 @@ def show_active_orders_page(orders):
                     # כפתור סגירת הזמנה
                     if st.button("✅", key=f"close_order_{order['id']}_{idx}", help="סגור הזמנה"):
                         move_order_to_closed(order)
-                        orders[:] = [o for o in orders if o['id'] != order['id']]
-                        save_orders(orders)
+                        # אין צורך לשמור רשימה ידנית - נטען מחדש מהרשימה במסד
                         st.success(f"הזמנה #{order['id']} נסגרה והועברה להזמנות סגורות")
                         st.rerun()
                 
@@ -1191,12 +1204,11 @@ def show_closed_order_details(order):
     
     if ('items' in order and 
         order['items'] and 
-        isinstance(order['items'], (dict, list))):
+        isinstance(order['items'], dict)):
         # הזמנת לקוח עם פריטים מרובים
         items_data = []
-        for item, quantity in order['items'].items():
-            price = PRODUCT_PRICES.get(item, 0)
-            total = price * quantity
+        for item, details in order['items'].items():
+            quantity = details.get('quantity', details) if isinstance(details, dict) else details
             items_data.append({
                 'מוצר': item,
                 'כמות': format_quantity_with_unit(quantity, item),
@@ -1209,8 +1221,6 @@ def show_closed_order_details(order):
         # הזמנה רגילה עם מוצר אחד
         product = order.get('product', 'מוצר לא ידוע')
         quantity = order.get('quantity', 0)
-        price = order.get('price', 0)
-        total = price * quantity
         
         col1, col2 = st.columns(2)
         with col1:
@@ -1365,18 +1375,21 @@ def show_add_order_page(orders):
         
         if submitted:
             if customer_name and product and price > 0:
-                new_order = {
-                    'id': get_next_order_id(),
+                # שמירה למסד הנתונים במקום שמירה לרשימה בזיכרון
+                order_data = {
                     'customer_name': customer_name,
-                    'category': category,
-                    'product': product,
-                    'quantity': quantity,
-                    'price': price,
+                    'phone': '',
+                    'address': {},
+                    'delivery_notes': '',
+                    'butcher_notes': '',
+                    'items': {product: quantity},
                     'status': status,
-                    'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'total_amount': 0.0,
+                    'customer_id': None
                 }
-                
-                save_orders(orders)
+                new_id = save_order(order_data)
+                new_order = {**order_data, 'id': new_id}
                 st.success("ההזמנה נוספה בהצלחה!")
                 
                 # הדפסה אוטומטית של ההזמנה
@@ -1445,22 +1458,41 @@ def show_edit_orders_page(orders):
                 
                 st.subheader("📦 פריטי ההזמנה")
                 items = selected_order.get('items', {})
-                
+
                 # עריכת פריטים
                 updated_items = {}
-                for item, quantity in items.items():
+                for item, details in items.items():
+                    # תמיכה במבנה שבו value הוא dict עם quantity/price/unit או מספר ישיר
+                    quantity_val = details.get('quantity', details) if isinstance(details, dict) else details
+                    try:
+                        quantity_float = float(quantity_val)
+                    except Exception:
+                        quantity_float = 0.0
+
                     col1, col2, col3 = st.columns([3, 1, 1])
                     with col1:
                         st.write(f"**{item}**")
                     with col2:
                         unit = get_product_unit(item)
                         if unit == "ק\"ג":
-                            new_qty = st.number_input(f"כמות ({unit})", min_value=0.0, value=float(quantity), step=0.1, key=f"qty_{item}")
+                            new_qty = st.number_input(
+                                f"כמות ({unit})",
+                                min_value=0.0,
+                                value=quantity_float,
+                                step=0.1,
+                                key=f"qty_{item}"
+                            )
                         else:
-                            new_qty = st.number_input(f"כמות ({unit})", min_value=0, value=int(quantity), step=1, key=f"qty_{item}")
+                            new_qty = st.number_input(
+                                f"כמות ({unit})",
+                                min_value=0,
+                                value=int(quantity_float) if quantity_float is not None else 0,
+                                step=1,
+                                key=f"qty_{item}"
+                            )
                     with col3:
                         st.write("")  # רווח במקום כפתור
-                    
+
                     if new_qty > 0:
                         updated_items[item] = new_qty
                 
@@ -1507,16 +1539,14 @@ def show_edit_orders_page(orders):
                 with col2:
                     if st.form_submit_button("סגור הזמנה", type="secondary"):
                         move_order_to_closed(selected_order)
-                        orders[:] = [o for o in orders if o['id'] != selected_order['id']]
-                        save_orders(orders)
+                        # נתונים ירודדו ברענון מהמסד
                         st.success("ההזמנה נסגרה והועברה להזמנות סגורות!")
                         st.rerun()
                 
                 with col3:
                     if st.form_submit_button("מחק הזמנה", type="secondary"):
                         delete_order(selected_order['id'])
-                        orders[:] = [o for o in orders if o['id'] != selected_order['id']]
-                        save_orders(orders)
+                        # נתונים ירודדו ברענון מהמסד
                         st.success("ההזמנה נמחקה בהצלחה!")
                         st.rerun()
         
@@ -1592,16 +1622,14 @@ def show_edit_orders_page(orders):
                 with col2:
                     if st.form_submit_button("סגור הזמנה", type="secondary"):
                         move_order_to_closed(selected_order)
-                        orders[:] = [o for o in orders if o['id'] != selected_order['id']]
-                        save_orders(orders)
+                        # נתונים ירודדו ברענון מהמסד
                         st.success("ההזמנה נסגרה והועברה להזמנות סגורות!")
                         st.rerun()
                 
                 with col3:
                     if st.form_submit_button("מחק הזמנה", type="secondary"):
                         delete_order(selected_order['id'])
-                        orders[:] = [o for o in orders if o['id'] != selected_order['id']]
-                        save_orders(orders)
+                        # נתונים ירודדו ברענון מהמסד
                         st.success("ההזמנה נמחקה בהצלחה!")
                         st.rerun()
 
@@ -1621,7 +1649,9 @@ def show_analytics_page(orders, closed_orders):
         items = order.get('items', {})
         if not isinstance(items, dict):
             continue  # דלג על הזמנות לא תקינות
-        for product, quantity in items.items():
+        for product, details in items.items():
+            # תמיכה במבנה בו הפריט הוא dict עם מפתח quantity או מספר ישיר
+            quantity = details.get('quantity', details) if isinstance(details, dict) else details
             # מצא קטגוריה
             category = next((cat for cat, plist in PRODUCT_CATEGORIES.items() if product in plist), 'לא ידוע')
             rows.append({
@@ -1755,7 +1785,7 @@ def show_enhanced_analytics_page(orders, closed_orders):
     st.header("📊 ניתוח מתקדם")
     
     customers = load_customers()
-    all_orders = orders + closed_orders
+    all_orders = (orders or []) + (closed_orders or [])
     
     # ניתוח לקוחות
     if customers:
@@ -1797,14 +1827,18 @@ def show_enhanced_analytics_page(orders, closed_orders):
     
     product_stats = {}
     for order in all_orders:
-        for product, quantity in order.get('items', {}).items():
+        for product, details in order.get('items', {}).items():
+            quantity = details.get('quantity', details) if isinstance(details, dict) else details
             if product not in product_stats:
                 product_stats[product] = {
                     'total_quantity': 0,
                     'total_orders': 0,
                     'customers': set()
                 }
-            product_stats[product]['total_quantity'] += quantity
+            try:
+                product_stats[product]['total_quantity'] += float(quantity)
+            except Exception:
+                continue
             product_stats[product]['total_orders'] += 1
             if 'customer_id' in order:
                 product_stats[product]['customers'].add(order['customer_id'])

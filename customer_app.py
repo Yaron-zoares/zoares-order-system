@@ -533,11 +533,11 @@ def add_to_cart(product_name, quantity, cutting_instructions=None):
     if full_name in st.session_state.cart:
         st.session_state.cart[full_name]['quantity'] += quantity
     else:
-        # חישוב מחיר מוקפא בשלב זה
-        price = 0
+        # קביעת מחיר מהרשימה המוגדרת
+        price = PRODUCT_PRICES.get(product_name, 50.0)  # ברירת מחדל 50 ש"ח
         st.session_state.cart[full_name] = {
             'quantity': quantity,
-            'price': 0,
+            'price': price,
             'unit': get_product_unit(product_name)
         }
 
@@ -551,7 +551,27 @@ def clear_cart():
     st.session_state.cart = {}
 
 def save_order_with_customer():
-    """שמירת הזמנה עם פרטי לקוח מפורטים"""
+    """שומר הזמנה עם פרטי לקוח"""
+    # יצירת קליינט API
+    try:
+        from backend.client import create_api_client
+        api_client = create_api_client()
+    except Exception as e:
+        st.warning(f"לא ניתן ליצור קליינט API: {str(e)}")
+        api_client = None
+    
+    # הכנת כתובת מלאה
+    address_parts = []
+    if st.session_state.customer_street_name:
+        address_parts.append(st.session_state.customer_street_name)
+    if st.session_state.customer_street_number:
+        address_parts.append(st.session_state.customer_street_number)
+    if st.session_state.customer_city:
+        address_parts.append(st.session_state.customer_city)
+    
+    full_address = ", ".join(address_parts) if address_parts else "כתובת לא צוינה"
+    full_name = f"{st.session_state.customer_first_name} {st.session_state.customer_last_name}"
+    
     # בדיקת שדות חובה
     if not st.session_state.customer_first_name or not st.session_state.customer_last_name or not st.session_state.customer_phone:
         st.error("יש להזין שם פרטי, שם משפחה ומספר טלפון של הלקוח")
@@ -566,70 +586,171 @@ def save_order_with_customer():
         st.error("מספר הטלפון חייב להכיל ספרות בלבד")
         return False
     
-    # בניית כתובת מלאה
-    address_parts = []
-    if st.session_state.customer_street_name:
-        address_parts.append(st.session_state.customer_street_name)
-    if st.session_state.customer_street_number:
-        address_parts.append(st.session_state.customer_street_number)
-    if st.session_state.customer_floor:
-        address_parts.append(f"קומה {st.session_state.customer_floor}")
-    if st.session_state.customer_apartment:
-        address_parts.append(f"דירה {st.session_state.customer_apartment}")
-    if st.session_state.customer_city:
-        address_parts.append(st.session_state.customer_city)
+    # נסה לשמור דרך השרת החדש
+    if api_client:
+        # בדיקה שהשרת זמין
+        if not api_client.health_check():
+            st.warning("⚠️ השרת לא זמין כרגע. המערכת תנסה לשמור במסד הנתונים המקומי.")
+            api_client = None
+        else:
+            st.success("✅ השרת זמין - שומר דרך השרת החדש")
     
-    full_address = ", ".join(address_parts) if address_parts else "כתובת לא צוינה"
-    full_name = f"{st.session_state.customer_first_name} {st.session_state.customer_last_name}"
-    
-    # נסה לשמור דרך ה-API אם זמין
-    if API_AVAILABLE:
+    if api_client:
         try:
-            api_client = create_api_client()
-            
-            # המרת הנתונים לפורמט ה-API
+            # הכנת נתוני ההזמנה לשרת
             items = []
+            total_amount = 0.0
             for product, details in st.session_state.cart.items():
-                base_name = product.split(' - ')[0] if ' - ' in product else product
-                unit = get_product_unit(base_name)
-                price = details.get('price', PRODUCT_PRICES.get(base_name, 0))
+                unit = get_product_unit(product.split(' - ')[0] if ' - ' in product else product)
+                price = details.get('price', 0)
+                quantity = details['quantity']
+                item_total = price * quantity
+                total_amount += item_total
                 
-                items.append({
-                    "product_name": product,
-                    "quantity": details['quantity'],
-                    "unit": unit,
-                    "price": price
-                })
+                # וידוא שכל השדות הנדרשים קיימים
+                item = {
+                    "product_name": str(product),
+                    "quantity": float(quantity),
+                    "unit": str(unit),
+                    "price_per_unit": float(price),
+                    "total_price": float(item_total),
+                    "cutting_instructions": ""
+                }
+                
+                # בדיקה שכל השדות תקינים
+                if not item["product_name"]:
+                    item["product_name"] = "מוצר לא ידוע"
+                if item["quantity"] <= 0:
+                    item["quantity"] = 1.0
+                if not item["unit"]:
+                    item["unit"] = "יחידה"
+                if item["price_per_unit"] < 0:
+                    item["price_per_unit"] = 0.0
+                if item["total_price"] < 0:
+                    item["total_price"] = 0.0
+                
+                items.append(item)
             
+            # חישוב סכומים
+            delivery_cost = 0.0  # ברירת מחדל
+            final_total = total_amount + delivery_cost
+            
+            # בדיקה שהסכומים תקינים
+            if total_amount <= 0:
+                st.warning("⚠️ סכום ההזמנה הוא 0 או שלילי. בדוק שהמחירים נקבעו נכון.")
+                # נסה לחשב מחדש מהמחירים המוגדרים
+                recalculated_total = 0.0
+                for product, details in st.session_state.cart.items():
+                    base_product = product.split(' - ')[0] if ' - ' in product else product
+                    default_price = PRODUCT_PRICES.get(base_product, 50.0)
+                    recalculated_total += default_price * details['quantity']
+                
+                if recalculated_total > 0:
+                    total_amount = recalculated_total
+                    final_total = total_amount + delivery_cost
+                    st.info(f"💰 הסכום חושב מחדש: {total_amount} ש\"ח")
+                else:
+                    st.error("❌ לא ניתן לחשב סכום תקין להזמנה")
+                    return False
+            
+            # הכנת נתוני ההזמנה בפורמט הנכון לשרת
             order_data = {
-                "customer_name": full_name,
-                "customer_phone": st.session_state.customer_phone,
-                "customer_address": full_address,
-                "customer_delivery_notes": st.session_state.customer_delivery_notes,
-                "customer_kitchen_notes": st.session_state.customer_kitchen_notes,
-                "items": items,
-                "total_amount": 0,
-                "order_date": datetime.now().isoformat()
+                "customer_name": str(full_name),
+                "customer_phone": str(st.session_state.customer_phone),
+                "customer_address": str(full_address) if full_address else "",
+                "items": items,  # זה כבר רשימה של פריטים בפורמט הנכון
+                "total_amount": float(total_amount),
+                "delivery_cost": float(delivery_cost),
+                "final_total": float(final_total),
+                "notes": str((st.session_state.customer_delivery_notes or "") + " " + (st.session_state.customer_kitchen_notes or "")).strip()
             }
             
+            # וידוא שכל השדות הם מהסוג הנכון
+            if not order_data["customer_name"] or not order_data["customer_phone"]:
+                st.error("❌ שם הלקוח ומספר הטלפון הם שדות חובה")
+                return False
+            
+            # בדיקה שהפריטים לא ריקים
+            if not items or len(items) == 0:
+                st.error("❌ אין פריטים בהזמנה")
+                return False
+            
+            # בדיקה שהסכומים תקינים
+            if total_amount <= 0:
+                st.error("❌ סכום ההזמנה חייב להיות גדול מ-0")
+                return False
+            
             # נסה ליצור לקוח או למצוא קיים
-            customer = api_client.create_or_get_customer(
-                full_name,
-                st.session_state.customer_phone,
-                full_address
-            )
+            try:
+                customer = api_client.create_or_get_customer(
+                    full_name,
+                    st.session_state.customer_phone,
+                    full_address
+                )
+                
+                if customer.get("error"):
+                    st.warning(f"שגיאה ביצירת/מציאת לקוח: {customer['error']}")
+                    raise Exception(f"שגיאה בלקוח: {customer['error']}")
+                
+            except AttributeError as e:
+                st.warning("השרת לא תומך בפונקציה create_or_get_customer")
+                raise Exception("פונקציה לא נתמכת בשרת")
+            except Exception as e:
+                st.warning(f"שגיאה ביצירת/מציאת לקוח: {str(e)}")
+                raise e
+            
+            # לוגים לדיבוג
+            st.info("📤 שולח הזמנה לשרת...")
+            with st.expander("🔍 צפה בנתוני ההזמנה שנשלחים לשרת"):
+                st.json(order_data)
+            
+            # בדיקה שהנתונים הם מילון ולא רשימה
+            if not isinstance(order_data, dict):
+                st.error(f"❌ שגיאה: order_data הוא {type(order_data)}, אמור להיות dict")
+                raise Exception(f"סוג נתונים שגוי: {type(order_data)}")
+            
+            # בדיקה שכל השדות הנדרשים קיימים
+            required_fields = ["customer_name", "customer_phone", "items", "total_amount", "delivery_cost", "final_total"]
+            missing_fields = [field for field in required_fields if field not in order_data]
+            if missing_fields:
+                st.error(f"❌ שדות חסרים: {missing_fields}")
+                raise Exception(f"שדות חסרים: {missing_fields}")
+            
+            # בדיקה שמבנה הפריטים נכון
+            if not isinstance(order_data["items"], list):
+                st.error(f"❌ שגיאה: items הוא {type(order_data['items'])}, אמור להיות list")
+                raise Exception(f"מבנה פריטים שגוי: {type(order_data['items'])}")
+            
+            # בדיקה שכל פריט הוא מילון עם השדות הנדרשים
+            for i, item in enumerate(order_data["items"]):
+                if not isinstance(item, dict):
+                    st.error(f"❌ פריט {i} הוא {type(item)}, אמור להיות dict")
+                    raise Exception(f"פריט {i} אינו מילון")
+                
+                item_required_fields = ["product_name", "quantity", "unit", "price_per_unit", "total_price"]
+                missing_item_fields = [field for field in item_required_fields if field not in item]
+                if missing_item_fields:
+                    st.error(f"❌ שדות חסרים בפריט {i}: {missing_item_fields}")
+                    raise Exception(f"שדות חסרים בפריט {i}: {missing_item_fields}")
             
             # שמירת ההזמנה
             order = api_client.create_order(order_data)
             
-            if order:
-                st.success("ההזמנה נשמרה בהצלחה דרך השרת החדש!")
+            if order and not order.get("error"):
+                st.success("✅ ההזמנה נשמרה בהצלחה דרך השרת החדש!")
+                st.balloons()
                 clear_cart()
                 return True
+            else:
+                error_msg = order.get("error", "שגיאה לא ידועה") if order else "לא התקבלה תגובה מהשרת"
+                st.error(f"❌ שגיאה בשמירת ההזמנה בשרת: {error_msg}")
+                raise Exception(f"שגיאת שרת: {error_msg}")
             
         except Exception as e:
-            st.warning(f"שמירה דרך השרת החדש נכשלה: {e}")
-            st.info("המערכת תנסה לשמור במסד הנתונים המקומי")
+            st.warning(f"⚠️ שמירה דרך השרת החדש נכשלה: {str(e)}")
+            st.info("🔄 המערכת תנסה לשמור במסד הנתונים המקומי")
+    else:
+        st.info("🔄 השרת לא זמין, שומר במסד הנתונים המקומי")
     
     # נסה לשמור במסד הנתונים המקומי
     try:
@@ -656,15 +777,30 @@ def save_order_with_customer():
         order = save_order(order_data)
         
         if order:
-            st.success("ההזמנה נשמרה בהצלחה!")
+            st.success("✅ ההזמנה נשמרה בהצלחה במסד הנתונים המקומי!")
+            st.balloons()
             clear_cart()
             return True
             
     except Exception as e:
-        st.error(f"שגיאה בשמירת ההזמנה: {e}")
+        st.error(f"❌ שגיאה בשמירת ההזמנה במסד הנתונים המקומי: {str(e)}")
+        # נסה לתקן קונפליקטים אם יש
+        if "UNIQUE constraint failed" in str(e):
+            try:
+                from database import fix_order_id_conflicts
+                st.info("🔧 מנסה לתקן קונפליקטים במסד הנתונים...")
+                result = fix_order_id_conflicts()
+                st.info(f"📋 תוצאות תיקון קונפליקטים: {result}")
+                # נסה שוב
+                order = save_order(order_data)
+                if order:
+                    st.success("✅ ההזמנה נשמרה בהצלחה לאחר תיקון הקונפליקטים!")
+                    st.balloons()
+                    clear_cart()
+                    return True
+            except Exception as fix_error:
+                st.error(f"❌ לא ניתן לתקן את הקונפליקטים: {str(fix_error)}")
         return False
-    
-    return False
 
 def show_cart_sidebar():
     """הצגת עגלת הקניות בסיידבר"""
@@ -797,10 +933,6 @@ def show_order_form():
                         address_parts.append(st.session_state.customer_street_name)
                     if st.session_state.customer_street_number:
                         address_parts.append(st.session_state.customer_street_number)
-                    if st.session_state.customer_floor:
-                        address_parts.append(f"קומה {st.session_state.customer_floor}")
-                    if st.session_state.customer_apartment:
-                        address_parts.append(f"דירה {st.session_state.customer_apartment}")
                     if st.session_state.customer_city:
                         address_parts.append(st.session_state.customer_city)
                     address_text = ", ".join(address_parts)
@@ -1433,6 +1565,13 @@ def main():
     
     # הצגת עגלת הקניות
     show_cart_sidebar()
+    
+    # סנכרון אוטומטי עם השרת (אם זמין)
+    try:
+        api_client = create_api_client()
+        auto_refresh_on_updates(api_client, refresh_interval=30)  # בדיקה כל 30 שניות
+    except Exception as e:
+        st.sidebar.warning(f"⚠️ בעיה בסנכרון: {str(e)}")
     
     # הצגת הדף הנבחר
     if st.session_state.selected_page == "הזמנת מוצרים":

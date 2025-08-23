@@ -15,6 +15,14 @@ from database import (
     import_existing_data
 )
 
+# ייבוא קליינט ה-API לסנכרון
+try:
+    from backend.client import create_api_client, auto_refresh_on_updates
+    API_AVAILABLE = True
+except ImportError:
+    API_AVAILABLE = False
+    st.warning("⚠️ לא ניתן לטעון קליינט ה-API. הסנכרון לא יהיה זמין.")
+
 # אתחול מסד הנתונים וייבוא נתונים קיימים
 if not os.path.exists('zoares_central.db'):
     init_database()
@@ -648,6 +656,14 @@ def main():
     # ניקוי לקוחות ישנים
     cleanup_old_customers()
     
+    # סנכרון אוטומטי עם השרת (אם זמין)
+    if API_AVAILABLE:
+        try:
+            api_client = create_api_client()
+            auto_refresh_on_updates(api_client, refresh_interval=30)  # בדיקה כל 30 שניות
+        except Exception as e:
+            st.sidebar.warning(f"⚠️ בעיה בסנכרון: {str(e)}")
+    
     # טעינת הזמנות
     orders = load_orders()
     closed_orders = load_closed_orders()
@@ -661,7 +677,7 @@ def main():
     
     page = st.sidebar.selectbox(
         "בחר עמוד:",
-        ["הזמנות פעילות", "הזמנות סגורות", "הוספת הזמנה", "עריכת הזמנות", "ניתוח נתונים", "ניהול לקוחות", "ניתוח מתקדם"]
+        ["הזמנות פעילות", "הזמנות סגורות", "הוספת הזמנה", "עריכת הזמנות", "ניתוח נתונים", "ניהול לקוחות", "ניתוח מתקדם", "תחזוקת מסד הנתונים"]
     )
     
     # כפתור ניקוי ידני
@@ -695,6 +711,8 @@ def main():
         show_customers_page()
     elif page == "ניתוח מתקדם":
         show_enhanced_analytics_page(orders, closed_orders)
+    elif page == "תחזוקת מסד הנתונים":
+        show_database_maintenance()
 
 def show_active_orders_page(orders):
     """מציג את דף ההזמנות הפעילות"""
@@ -1456,7 +1474,18 @@ def show_edit_orders_page(orders):
             order['items'] and 
             isinstance(order['items'], (dict, list))):
             # הזמנת לקוח עם פריטים מרובים
-            items_desc = ", ".join([f"{item} x{qty}" for item, qty in order['items'].items()])
+            items_list = []
+            for item, details in order['items'].items():
+                if isinstance(details, dict):
+                    # אם details הוא dictionary עם quantity ו-unit
+                    quantity = details.get('quantity', 1)
+                    unit = details.get('unit', 'יחידות')
+                    items_list.append(f"{item} x{quantity} {unit}")
+                else:
+                    # אם details הוא מספר ישיר
+                    items_list.append(f"{item} x{details} יחידות")
+            
+            items_desc = ", ".join(items_list)
             order_options[f"{order['id']} - {order['customer_name']} - {items_desc}"] = order
         else:
             # הזמנה רגילה עם מוצר אחד
@@ -1944,6 +1973,100 @@ def show_enhanced_analytics_page(orders, closed_orders):
             ax.tick_params(axis='x', rotation=45)
             plt.tight_layout()
             st.pyplot(fig)
+
+def show_database_maintenance():
+    """מציג דף תחזוקת מסד הנתונים"""
+    st.header("🔧 תחזוקת מסד הנתונים")
+    
+    st.info("דף זה מאפשר לך לתקן בעיות במסד הנתונים ולבצע פעולות תחזוקה.")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("📊 סטטוס מסד הנתונים")
+        
+        # בדיקת קונפליקטים
+        if st.button("🔍 בדוק קונפליקטים", type="secondary"):
+            try:
+                from database import fix_order_id_conflicts
+                result = fix_order_id_conflicts()
+                st.success(result)
+            except Exception as e:
+                st.error(f"שגיאה בבדיקת קונפליקטים: {str(e)}")
+        
+        # איפוס מונה הזמנות
+        if st.button("🔄 אפס מונה הזמנות", type="secondary"):
+            try:
+                from database import reset_order_counter
+                new_id = reset_order_counter()
+                st.success(f"המונה אופס בהצלחה! מספר הזמנה הבא: {new_id}")
+            except Exception as e:
+                st.error(f"שגיאה באיפוס המונה: {str(e)}")
+        
+        # ניקוי הזמנות ישנות
+        if st.button("🧹 נקה הזמנות ישנות", type="secondary"):
+            try:
+                from database import cleanup_old_orders
+                active_moved, closed_deleted = cleanup_old_orders()
+                st.success(f"נוקו {active_moved} הזמנות פעילות ו-{closed_deleted} הזמנות סגורות")
+            except Exception as e:
+                st.error(f"שגיאה בניקוי הזמנות: {str(e)}")
+        
+        # ניקוי לקוחות ישנים
+        if st.button("👥 נקה לקוחות ישנים", type="secondary"):
+            try:
+                from database import cleanup_old_customers
+                deleted_count = cleanup_old_customers()
+                st.success(f"נקו {deleted_count} לקוחות ישנים")
+            except Exception as e:
+                st.error(f"שגיאה בניקוי לקוחות: {str(e)}")
+    
+    with col2:
+        st.subheader("📈 מידע על מסד הנתונים")
+        
+        try:
+            from database import get_next_order_id, get_db_connection
+            import sqlite3
+            
+            # מידע על מונה ההזמנות
+            next_id = get_next_order_id()
+            st.metric("מספר הזמנה הבא", next_id)
+            
+            # מידע על הטבלאות
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            # ספירת הזמנות פעילות
+            cursor.execute('SELECT COUNT(*) FROM orders')
+            active_count = cursor.fetchone()[0]
+            st.metric("הזמנות פעילות", active_count)
+            
+            # ספירת הזמנות סגורות
+            cursor.execute('SELECT COUNT(*) FROM closed_orders')
+            closed_count = cursor.fetchone()[0]
+            st.metric("הזמנות סגורות", closed_count)
+            
+            # ספירת לקוחות
+            cursor.execute('SELECT COUNT(*) FROM customers')
+            customers_count = cursor.fetchone()[0]
+            st.metric("לקוחות", customers_count)
+            
+            # גודל מסד הנתונים
+            cursor.execute('SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()')
+            db_size = cursor.fetchone()[0]
+            st.metric("גודל מסד הנתונים", f"{db_size / 1024:.1f} KB")
+            
+            conn.close()
+            
+        except Exception as e:
+            st.error(f"שגיאה בקבלת מידע על מסד הנתונים: {str(e)}")
+    
+    st.subheader("⚠️ אזהרות")
+    st.warning("""
+    - פעולות תחזוקה עלולות להשפיע על הנתונים במערכת
+    - מומלץ לגבות את מסד הנתונים לפני ביצוע פעולות תחזוקה
+    - אם יש בעיות, פנה לתמיכה טכנית
+    """)
 
 if __name__ == "__main__":
     main()

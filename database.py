@@ -127,35 +127,68 @@ def save_order(order: Dict[str, Any]) -> int:
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # קבלת מספר הזמנה הבא
-    cursor.execute('SELECT next_order_id FROM order_counter WHERE id = 1')
-    next_id = cursor.fetchone()[0]
-    
-    # עדכון המונה
-    cursor.execute('UPDATE order_counter SET next_order_id = ? WHERE id = 1', (next_id + 1,))
-    
-    # הכנסת ההזמנה
-    cursor.execute('''
-        INSERT INTO orders (id, customer_name, phone, address, delivery_notes, 
+    try:
+        # קבלת מספר הזמנה הבא
+        cursor.execute('SELECT next_order_id FROM order_counter WHERE id = 1')
+        next_id = cursor.fetchone()[0]
+        
+        # עדכון המונה
+        cursor.execute('UPDATE order_counter SET next_order_id = ? WHERE id = 1', (next_id + 1,))
+        
+        # הכנסת ההזמנה עם REPLACE במקום INSERT כדי למנוע שגיאות UNIQUE
+        cursor.execute('''
+            INSERT OR REPLACE INTO orders (id, customer_name, phone, address, delivery_notes, 
                            butcher_notes, items, status, created_at, total_amount, customer_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        next_id,
-        order['customer_name'],
-        order['phone'],
-        json.dumps(order.get('address', {})),
-        order.get('delivery_notes', ''),
-        order.get('butcher_notes', ''),
-        json.dumps(order['items']),
-        order.get('status', 'pending'),
-        order.get('created_at', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-        order.get('total_amount', 0.0),
-        order.get('customer_id')
-    ))
-    
-    conn.commit()
-    conn.close()
-    return next_id
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            next_id,
+            order['customer_name'],
+            order['phone'],
+            json.dumps(order.get('address', {})),
+            order.get('delivery_notes', ''),
+            order.get('butcher_notes', ''),
+            json.dumps(order['items']),
+            order.get('status', 'pending'),
+            order.get('created_at', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+            order.get('total_amount', 0.0),
+            order.get('customer_id')
+        ))
+        
+        conn.commit()
+        return next_id
+        
+    except sqlite3.IntegrityError as e:
+        # אם יש שגיאת UNIQUE, ננסה עם ID אחר
+        if "UNIQUE constraint failed" in str(e):
+            # נקבל ID חדש וננסה שוב
+            cursor.execute('SELECT next_order_id FROM order_counter WHERE id = 1')
+            new_id = cursor.fetchone()[0]
+            cursor.execute('UPDATE order_counter SET next_order_id = ? WHERE id = 1', (new_id + 1,))
+            
+            cursor.execute('''
+                INSERT INTO orders (id, customer_name, phone, address, delivery_notes, 
+                               butcher_notes, items, status, created_at, total_amount, customer_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                new_id,
+                order['customer_name'],
+                order['phone'],
+                json.dumps(order.get('address', {})),
+                order.get('delivery_notes', ''),
+                order.get('butcher_notes', ''),
+                json.dumps(order['items']),
+                order.get('status', 'pending'),
+                order.get('created_at', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+                order.get('total_amount', 0.0),
+                order.get('customer_id')
+            ))
+            
+            conn.commit()
+            return new_id
+        else:
+            raise e
+    finally:
+        conn.close()
 
 def update_order(order_id: int, updated_fields: Dict[str, Any]):
     """מעדכן הזמנה קיימת"""
@@ -422,6 +455,59 @@ def get_next_order_id() -> int:
     
     conn.close()
     return next_id
+
+def reset_order_counter():
+    """מאפס את מונה ההזמנות למספר הבא אחרי ההזמנה הגבוהה ביותר"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # מציאת ההזמנה עם ה-ID הגבוה ביותר
+        cursor.execute('SELECT MAX(id) FROM orders')
+        max_order_id = cursor.fetchone()[0]
+        
+        if max_order_id is None:
+            max_order_id = 0
+        
+        # עדכון המונה למספר הבא
+        cursor.execute('UPDATE order_counter SET next_order_id = ? WHERE id = 1', (max_order_id + 1,))
+        
+        conn.commit()
+        return max_order_id + 1
+        
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
+def fix_order_id_conflicts():
+    """מתקן קונפליקטים של ID הזמנות"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # בדיקה אם יש הזמנות עם ID כפול
+        cursor.execute('''
+            SELECT id, COUNT(*) as count 
+            FROM orders 
+            GROUP BY id 
+            HAVING count > 1
+        ''')
+        
+        duplicates = cursor.fetchall()
+        
+        if duplicates:
+            # אם יש כפילויות, נאפס את המונה
+            reset_order_counter()
+            return f"נמצאו {len(duplicates)} הזמנות כפולות. המונה אופס."
+        
+        return "לא נמצאו קונפליקטים"
+        
+    except Exception as e:
+        return f"שגיאה בבדיקת קונפליקטים: {str(e)}"
+    finally:
+        conn.close()
 
 # פונקציות ניקוי
 def cleanup_old_orders(active_retention_days: int = 20, closed_retention_days: int = 1825):
